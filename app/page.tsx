@@ -1,103 +1,157 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { UploadCloud, Link2, Image as ImageIcon, Video, AudioWaveform, Shield, Globe, UsersRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator"
+
+export default function EnterpriseUpload() {
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+<div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-background dark:to-background" >
+      {/* Hero Section */}
+      <section className="mx-auto max-w-4xl text-center px-6 py-14">
+        <h1 className="text-4xl md:text-5xl font-bold dark:text-white tracking-tight text-slate-900">
+          Secure Media Integrity <br />
+          <span className="text-sky-500 dark:text-sky-400">Enterprise-Grade Protection</span>
+        </h1>
+        <p className="mt-4 text-lg text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">
+          Advanced deepfake detection and C2PA provenance verification for newsrooms,
+          ensuring authentic media in an age of synthetic content.
+        </p>
+      </section>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Upload Area */}
+<main className="flex-1">
+      <div className="mx-auto max-w-2xl px-6">
+        <Card className="shadow-lg border border-dashed border-sky-500 dark:border-sky-400 dark:bg-card/50 bg-white">
+          <CardContent className="p-8 space-y-10">
+            {/* File Upload */}
+            <div className="flex flex-col items-center justify-center border border-dashed border-slate-300 border-slate-500 hover:border-sky-500 rounded-xl p-10 dark:hover:border-sky-400 transition bg-white dark:bg-card">
+
+            <div className="flex flex-col items-center justify-center ">
+              <UploadCloud className="h-10 w-10 text-sky-500 dark:text-sky-400 mb-3" />
+              <p className="font-medium text-slate-700 dark:text-slate-200">
+                Upload Media for Verification
+              </p>
+              <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-2 ">
+                <span className="flex items-center gap-1">
+                  <Video className="h-4 w-4" /> Video Files
+                </span>
+                <span className="flex items-center gap-1">
+                  <ImageIcon className="h-4 w-4" /> Image Files
+                </span>
+                                <span className="flex items-center gap-1">
+                  <AudioWaveform className="h-4 w-4" /> Audio Files
+                </span>
+
+              </div>
+                            <p className="mt-2 text-xs text-slate-400 dark:text-slate-400 text-center mb-3">
+                (Max 10MB each) • Multiple files supported
+              </p>
+
+              <Button
+                size="lg"
+                className="bg-slate-900 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-600 text-white rounded-xl px-6"
+              >
+                Browse Files
+              </Button>
+            </div>
+
+
+{/* URL Scan */}
+<div className="flex flex-col items-center w-full">
+  <div className="relative w-full flex items-center my-6">
+    <Separator className="flex-1 bg-slate-300 dark:bg-slate-500" />
+    <span className="px-3 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+      <Link2 className="h-4 w-4 text-sky-500 dark:sky-400" />
+      Or add from URL
+    </span>
+    <Separator className="flex-1 bg-slate-300 dark:bg-slate-500" />
+  </div>
+
+  <div className="flex w-full gap-2">
+    <input
+      type="text"
+      placeholder="Paste media URL here..."
+      className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-background/50 dark:text-white"
+    />
+    <Button
+      size="default"
+      className="bg-slate-900 hover:bg-sky-500 text-white dark:bg-sky-500 dark:hover:bg-sky-600 rounded-md px-4"
+    >
+      Add File
+    </Button>
+  </div>
+</div>
+     <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
+              1 scan = 1 credit. Enterprise plans start at 500 credits/month.
+            </p>
+
+
+          </div>
+          </CardContent>
+                      {/* Footer note */}
+            <p className="text-xs text-slate-500 dark:text-slate-200 text-center">
+              Max file size: 300MB. Accepted formats: JPG, PNG, MP3, WAV, MP4, WebM, MOV, AVI, WMV, MKV, FLV
+            </p>
+
+        </Card>
+      </div>
+    </main>
+<div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 mb-8 mt-10 px-6">
+  {/* AI-Powered Detection */}
+  <Card className="bg-card/60 border dark:border-gray-800 shadow-lg rounded-lg flex flex-col items-center justify-center text-center p-6">
+    <CardHeader className="flex items-center justify-center">
+      <div className="flex items-center justify-center p-2 rounded-full bg-green-500/10">
+        <Shield className="h-8 w-8 text-green-400/70" />
+      </div>
+    </CardHeader>
+    <CardContent>
+      <CardTitle className="text-gray-500 dark:text-gray-200 text-base font-semibold mb-2">
+        AI-Powered Detection
+      </CardTitle>
+      <p className="text-sm text-gray-400">
+        Overview of all claims submitted to the system.
+      </p>
+    </CardContent>
+  </Card>
+
+  {/* C2PA Provenance */}
+  <Card className="bg-card/60 border dark:border-gray-800 shadow-lg rounded-lg flex flex-col items-center justify-center text-center p-6">
+    <CardHeader className="flex items-center justify-center">
+      <div className="flex items-center justify-center p-2 rounded-full bg-slate-400/10">
+        <Globe className="h-8 w-8 text-slate-400/70" />
+      </div>
+    </CardHeader>
+    <CardContent>
+      <CardTitle className="text-gray-500 dark:text-gray-200 text-base font-semibold mb-2">
+        C2PA Provenance
+      </CardTitle>
+      <p className="text-sm text-gray-400">
+        Complete media lineage tracking and authenticity verification
+      </p>
+    </CardContent>
+  </Card>
+
+  {/* Enterprise Ready */}
+  <Card className="bg-card/60 border dark:border-gray-800 shadow-lg rounded-lg flex flex-col items-center justify-center text-center p-6">
+    <CardHeader className="flex items-center justify-center">
+      <div className="flex items-center justify-center p-2 rounded-full bg-yellow-500/10">
+        <UsersRound className="h-8 w-8 text-yellow-500/70" />
+      </div>
+    </CardHeader>
+    <CardContent>
+      <CardTitle className="text-gray-500 dark:text-gray-200 text-base font-semibold mb-2">
+        Enterprise Ready
+      </CardTitle>
+      <p className="text-sm text-gray-400">
+        Multi-tenant architecture with advanced user management
+      </p>
+    </CardContent>
+  </Card>
+</div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
   );
 }
