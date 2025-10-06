@@ -49,7 +49,7 @@ const recentScans = [
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen dark:bg-background px-6 py-8">
+    <div className="min-h-screen bg-white dark:bg-black px-6 py-8">
       {/* Theme-aware CSS vars for chart colors */}
       <style jsx global>{`
         :root {
@@ -66,11 +66,11 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
-        <div className="border-b pb-4">
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+        <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
+          <h1 className="text-3xl font-bold text-black dark:text-white">
             Manage Your Media Verification
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Track usage, review recent scans, and monitor authenticity insights.
           </p>
         </div>
@@ -78,20 +78,20 @@ export default function Dashboard() {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Credit Balance */}
-          <Card className="shadow-lg border border-slate-200 dark:border-slate-800 bg-card/70 backdrop-blur">
+          <Card className="shadow-lg bg-white dark:bg-black">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+              <CardTitle className="flex items-center gap-2 text-black dark:text-white">
                 <Wallet className="h-5 w-5 text-indigo-500" />
                 Credit Balance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">425</div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+              <div className="text-3xl font-bold text-black dark:text-white">425</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 of 500 credits
               </p>
               <Progress value={85} className="h-2 mb-4" />
-              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-4">
+              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-4">
                 <span>Daily Usage: 23</span>
                 <span>Est. Days Left: 18</span>
               </div>
@@ -100,9 +100,9 @@ export default function Dashboard() {
           </Card>
 
           {/* Recent Scans */}
-          <Card className="shadow-lg border border-slate-200 dark:border-slate-800 bg-card/70 backdrop-blur">
+          <Card className="shadow-lg bg-white dark:bg-black">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+              <CardTitle className="flex items-center gap-2 text-black dark:text-white">
                 <FileText className="h-5 w-5 text-emerald-500" />
                 Recent Scans
               </CardTitle>
@@ -111,12 +111,12 @@ export default function Dashboard() {
               {recentScans.map((scan, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-background/60 px-3 py-2 hover:shadow-sm transition"
+                  className="flex items-center justify-between rounded-md bg-gray-50 dark:bg-black px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
                 >
                   {/* Left side */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{scan.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-sm font-medium truncate text-black dark:text-white">{scan.name}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
                       {scan.time}
                     </p>
                   </div>
@@ -128,7 +128,7 @@ export default function Dashboard() {
                     >
                       {scan.status} ({scan.confidence})
                     </span>
-                    <Eye className="h-4 w-4 text-slate-500 cursor-pointer flex-shrink-0" />
+                    <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400 cursor-pointer flex-shrink-0" />
                   </div>
                 </div>
               ))}
@@ -139,9 +139,9 @@ export default function Dashboard() {
           </Card>
 
           {/* Weekly Usage */}
-          <Card className="shadow-lg border border-slate-200 dark:border-slate-800 bg-card/70 backdrop-blur">
+          <Card className="shadow-lg bg-white dark:bg-black">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+              <CardTitle className="flex items-center gap-2 text-black dark:text-white">
                 <TrendingUp className="h-5 w-5 text-rose-500" />
                 Weekly Usage
               </CardTitle>
@@ -153,10 +153,10 @@ export default function Dashboard() {
                   <YAxis stroke="#94a3b8" />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "var(--background)",
-                      border: "1px solid #cbd5e1",
+                      backgroundColor: "#000000",
+                      border: "1px solid #374151",
                       borderRadius: "0.5rem",
-                      color: "var(--foreground)",
+                      color: "#ffffff",
                     }}
                   />
                   <Bar dataKey="Authentic" stackId="a" fill="var(--color-authentic)" />
@@ -164,7 +164,7 @@ export default function Dashboard() {
                   <Bar dataKey="Deepfake" stackId="a" fill="var(--color-deepfake)" />
                 </BarChart>
               </ResponsiveContainer>
-              <div className="flex justify-center gap-6 mt-4 text-sm">
+              <div className="flex justify-center gap-6 mt-4 text-sm text-black dark:text-white">
                 <span className="flex items-center gap-1">
                   <span
                     className="w-3 h-3 rounded-sm"
