@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSignIn } from "@clerk/nextjs";
+import AnimatedText from "@/components/ui/animated-text";
 
 export default function Login() {
   const router = useRouter();
@@ -76,6 +77,7 @@ export default function Login() {
       <div className="flex flex-col md:flex-row-reverse w-full max-w-5xl rounded-2xl overflow-hidden border border-border shadow-background backdrop-blur-md  bg-slate-50 dark:bg-card/30">
         {/* Left image */}
         <div className="w-full md:w-1/2 flex items-center justify-center p-6">
+        
           <Image
             src="/deeptrack-security.svg"
             alt="Login Illustration"
@@ -83,6 +85,8 @@ export default function Login() {
             width={400}
             height={400}
           />
+          <AnimatedText />
+
         </div>
 
         {/* Right form area */}

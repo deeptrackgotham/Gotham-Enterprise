@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSignUp, useSignIn } from "@clerk/nextjs";
+import AnimatedText from "@/components/ui/animated-text";
 
 export default function Signup() {
   const router = useRouter();
@@ -116,6 +117,7 @@ async function handleSubmit(e: React.FormEvent) {
             width={400}
             height={400}
           />
+          <AnimatedText />
         </div>
 
         {/* Right form area */}
