@@ -3,8 +3,8 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/ui/header";
-import { ThemeProvider } from "@/components/theme-provider";
-import Footer from "@/components/ui/footer";
+// import { ThemeProvider } from "@/components/theme-provider";
+// import Footer from "@/components/ui/footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,7 +32,7 @@ export default function RootLayout({
         <body
           className={`${inter.className} min-h-screen bg-background text-slate-900 dark:text-slate-100`}
         >
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          {/* <ThemeProvider attribute="class" defaultTheme="light" enableSystem> */}
             <div className="flex flex-col min-h-screen">
               {/* Header */}
               <Header />
@@ -43,9 +43,9 @@ export default function RootLayout({
               </div>
 
               {/* Footer */}
-              <Footer />
+              {/* <Footer /> */}
             </div>
-          </ThemeProvider>
+          {/* </ThemeProvider> */}
         </body>
       </html>
     </ClerkProvider>

@@ -132,7 +132,7 @@ export default function Header() {
           </DropdownMenu>
         )}
 
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
       </div>
 
       {/* Mobile menu (hamburger) */}
@@ -152,11 +152,12 @@ export default function Header() {
               <Link href="/dashboard" className="text-gray-800 dark:text-gray-200">Dashboard</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/history" className="text-gray-800 dark:text-gray-200">History</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
               <Link href="/results" className="text-gray-800 dark:text-gray-200">Results</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/history" className="text-gray-800 dark:text-gray-200">History</Link>
+            </DropdownMenuItem>
+            
             <DropdownMenuItem asChild>
               <Link href="/pricing-billing" className="text-gray-800 dark:text-gray-200">Pricing &amp; Billing</Link>
             </DropdownMenuItem>
