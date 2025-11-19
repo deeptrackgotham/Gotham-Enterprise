@@ -80,7 +80,8 @@ It provides:
 
 1. **Create `.env.local`:**
 ```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/gotham-enterprise
+MONGODB_URI=
+gotham-enterprise
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_key
 CLERK_SECRET_KEY=your_secret
 ```

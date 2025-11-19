@@ -33,7 +33,7 @@ mongodb://localhost:27017/gotham-enterprise
 In your project root, create `.env.local`:
 
 ```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/gotham-enterprise?retryWrites=true&w=majority
+MONGODB_URI=
 
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_key
 CLERK_SECRET_KEY=your_clerk_secret
