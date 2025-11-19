@@ -1,15 +1,111 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { UploadCloud, Link2, Image as ImageIcon, Video, AudioWaveform, Shield, Globe, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/components/ui/separator";
+import { createScan } from "@/lib/api";
 
 export default function EnterpriseUpload() {
+  const router = useRouter();
+  const { isSignedIn, user } = useUser();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [urlInput, setUrlInput] = useState("");
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!isSignedIn) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Determine file type
+      const fileType = file.type.startsWith("image/")
+        ? "image"
+        : file.type.startsWith("video/")
+        ? "video"
+        : file.type.startsWith("audio/")
+        ? "audio"
+        : "image";
+
+      // Create a mock scan result (in production, you'd send to your verification service)
+      const mockResult = await createScan({
+        fileName: file.name,
+        fileType: fileType as "image" | "video" | "audio",
+        status: ["AUTHENTIC", "SUSPICIOUS", "DEEPFAKE"][Math.floor(Math.random() * 3)] as any,
+        confidenceScore: Math.random() * 100,
+        modelsUsed: ["ModelA", "ModelB"],
+        imageUrl: file.type.startsWith("image/")
+          ? URL.createObjectURL(file)
+          : "https://via.placeholder.com/280x180.png?text=Uploaded+File",
+        description: "Media verification scan completed",
+        features: [
+          "Advanced AI models trained on millions of authentic and manipulated images",
+          "Ensemble approach using multiple specialized detection algorithms",
+          "Real-time detection of deepfakes, AI-generated content, and manipulations",
+        ],
+      });
+
+      router.push(`/results/${mockResult.scanId}`);
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setError(err.message || "Failed to upload file");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUrlSubmit = async () => {
+    if (!urlInput.trim()) {
+      setError("Please enter a URL");
+      return;
+    }
+
+    if (!isSignedIn) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const mockResult = await createScan({
+        fileName: new URL(urlInput).pathname.split("/").pop() || "media-file",
+        fileType: "image",
+        status: ["AUTHENTIC", "SUSPICIOUS", "DEEPFAKE"][Math.floor(Math.random() * 3)] as any,
+        confidenceScore: Math.random() * 100,
+        modelsUsed: ["ModelA", "ModelB"],
+        imageUrl: urlInput,
+        description: "Media verification scan completed",
+        features: [
+          "Advanced AI models trained on millions of authentic and manipulated images",
+          "Ensemble approach using multiple specialized detection algorithms",
+          "Real-time detection of deepfakes, AI-generated content, and manipulations",
+        ],
+      });
+
+      router.push(`/results/${mockResult.scanId}`);
+    } catch (err: any) {
+      console.error("URL scan error:", err);
+      setError(err.message || "Failed to scan URL");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-<div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-background dark:to-background" >
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-background dark:to-background" >
       {/* Hero Section */}
       <section className="mx-auto max-w-4xl text-center px-6 py-14">
         <h1 className="text-4xl md:text-5xl font-bold dark:text-white tracking-tight text-slate-900">
@@ -27,37 +123,52 @@ export default function EnterpriseUpload() {
       <div className="mx-auto max-w-2xl px-6">
         <Card className="shadow-lg border border-dashed border-sky-500 dark:border-sky-400 dark:bg-card/50 bg-white">
           <CardContent className="p-8 space-y-10">
+            {error && (
+              <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+
             {/* File Upload */}
             <div className="flex flex-col items-center justify-center border border-dashed border-slate-300 border-slate-500 hover:border-sky-500 rounded-xl p-10 dark:hover:border-sky-400 transition bg-white dark:bg-card">
+              <input
+                type="file"
+                id="file-input"
+                accept="image/*,video/*,audio/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={loading}
+              />
 
-            <div className="flex flex-col items-center justify-center ">
-              <UploadCloud className="h-10 w-10 text-sky-500 dark:text-sky-400 mb-3" />
-              <p className="font-medium text-slate-700 dark:text-slate-200">
-                Upload Media for Verification
-              </p>
-              <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-2 ">
-                <span className="flex items-center gap-1">
-                  <Video className="h-4 w-4" /> Video Files
-                </span>
-                <span className="flex items-center gap-1">
-                  <ImageIcon className="h-4 w-4" /> Image Files
-                </span>
-                                <span className="flex items-center gap-1">
-                  <AudioWaveform className="h-4 w-4" /> Audio Files
-                </span>
+              <div className="flex flex-col items-center justify-center ">
+                <UploadCloud className="h-10 w-10 text-sky-500 dark:text-sky-400 mb-3" />
+                <p className="font-medium text-slate-700 dark:text-slate-200">
+                  Upload Media for Verification
+                </p>
+                <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-2 ">
+                  <span className="flex items-center gap-1">
+                    <Video className="h-4 w-4" /> Video Files
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ImageIcon className="h-4 w-4" /> Image Files
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <AudioWaveform className="h-4 w-4" /> Audio Files
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-slate-400 dark:text-slate-400 text-center mb-3">
+                  (Max 10MB each) • Multiple files supported
+                </p>
 
+                <Button
+                  size="lg"
+                  onClick={() => document.getElementById("file-input")?.click()}
+                  disabled={loading}
+                  className="bg-slate-900 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-600 text-white rounded-xl px-6"
+                >
+                  {loading ? "Processing..." : "Browse Files"}
+                </Button>
               </div>
-                            <p className="mt-2 text-xs text-slate-400 dark:text-slate-400 text-center mb-3">
-                (Max 10MB each) • Multiple files supported
-              </p>
-
-              <Button
-                size="lg"
-                className="bg-slate-900 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-600 text-white rounded-xl px-6"
-              >
-                Browse Files
-              </Button>
-            </div>
 
 
 {/* URL Scan */}
@@ -75,13 +186,18 @@ export default function EnterpriseUpload() {
     <input
       type="text"
       placeholder="Paste media URL here..."
-      className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-background/50 dark:text-white"
+      value={urlInput}
+      onChange={(e) => setUrlInput(e.target.value)}
+      disabled={loading}
+      className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-background/50 dark:text-white disabled:opacity-50"
     />
     <Button
       size="default"
+      onClick={handleUrlSubmit}
+      disabled={loading}
       className="bg-slate-900 hover:bg-sky-500 text-white dark:bg-sky-500 dark:hover:bg-sky-600 rounded-md px-4"
     >
-      Add File
+      {loading ? "Processing..." : "Add File"}
     </Button>
   </div>
 </div>

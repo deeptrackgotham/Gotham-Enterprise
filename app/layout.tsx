@@ -3,6 +3,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/ui/header";
+import UserSyncProvider from "@/components/user-sync-provider";
 // import { ThemeProvider } from "@/components/theme-provider";
 // import Footer from "@/components/ui/footer";
 
@@ -33,18 +34,20 @@ export default function RootLayout({
           className={`${inter.className} min-h-screen bg-background text-slate-900 dark:text-slate-100`}
         >
           {/* <ThemeProvider attribute="class" defaultTheme="light" enableSystem> */}
-            <div className="flex flex-col min-h-screen">
-              {/* Header */}
-              <Header />
+            <UserSyncProvider>
+              <div className="flex flex-col min-h-screen">
+                {/* Header */}
+                <Header />
 
-              {/* Main content */}
-              <div className="flex flex-1 overflow-hidden">
-                <main className="flex-1 overflow-y-auto p-6">{children}</main>
+                {/* Main content */}
+                <div className="flex flex-1 overflow-hidden">
+                  <main className="flex-1 overflow-y-auto p-6">{children}</main>
+                </div>
+
+                {/* Footer */}
+                {/* <Footer /> */}
               </div>
-
-              {/* Footer */}
-              {/* <Footer /> */}
-            </div>
+            </UserSyncProvider>
           {/* </ThemeProvider> */}
         </body>
       </html>

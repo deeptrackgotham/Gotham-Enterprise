@@ -1,31 +1,81 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Check } from "lucide-react";
+import { fetchResult } from "@/lib/api";
+import { useUser } from "@clerk/nextjs";
+
+interface ResultData {
+  fileName: string;
+  scanId: string;
+  status: string;
+  confidenceScore: number;
+  createdAt: string;
+  fileType: string;
+  modelsUsed: string[];
+  imageUrl: string;
+  description: string;
+  features: string[];
+}
 
 export default function ResultsPage() {
   const { id } = useParams();
+  const { isSignedIn } = useUser();
+  const [resultData, setResultData] = useState<ResultData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const resultData = {
-    fileName: "test-image",
-    requestId: `test-${id}`,
-    status: "AUTHENTIC",
-    confidenceScore: 95.0,
-    uploadedDate: "Thu, Sep 11, 2025",
-    type: "image",
-    format: "JPEG",
-    modelsUsed: "2 AI Models",
-    imageUrl: "https://via.placeholder.com/280x180.png?text=Detected+Image",
-    description:
-      "deeptrack is an advanced deepfake detection solution designed for media outlets, financial institutions, and government agencies",
-    features: [
-      "Advanced AI models trained on millions of authentic and manipulated images",
-      "Ensemble approach using multiple specialized detection algorithms",
-      "Real-time detection of deepfakes, AI-generated content, and manipulations",
-    ],
-  };
+  useEffect(() => {
+    if (!isSignedIn || !id) return;
+
+    const loadResult = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchResult(id as string);
+        setResultData({
+          fileName: data.fileName,
+          scanId: data.scanId,
+          status: data.status,
+          confidenceScore: data.confidenceScore,
+          createdAt: data.createdAt,
+          fileType: data.fileType,
+          modelsUsed: data.modelsUsed || [],
+          imageUrl: data.imageUrl || "https://via.placeholder.com/280x180.png?text=Detected+Image",
+          description: data.description || "deeptrack is an advanced deepfake detection solution designed for media outlets, financial institutions, and government agencies",
+          features: data.features || [
+            "Advanced AI models trained on millions of authentic and manipulated images",
+            "Ensemble approach using multiple specialized detection algorithms",
+            "Real-time detection of deepfakes, AI-generated content, and manipulations",
+          ],
+        });
+      } catch (err) {
+        console.error("Failed to load result:", err);
+        setError("Failed to load result details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadResult();
+  }, [isSignedIn, id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white items-center justify-center">
+        <p>Loading result...</p>
+      </div>
+    );
+  }
+
+  if (error || !resultData) {
+    return (
+      <div className="min-h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white items-center justify-center">
+        <p className="text-red-500">{error || "Result not found"}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white">
@@ -76,24 +126,20 @@ export default function ResultsPage() {
                 {resultData.confidenceScore}%
               </p>
               <p>
-                <span className="font-semibold">Request ID: </span>
-                {resultData.requestId}
+                <span className="font-semibold">Scan ID: </span>
+                {resultData.scanId}
               </p>
               <p>
                 <span className="font-semibold">Uploaded Date: </span>
-                {resultData.uploadedDate}
+                {new Date(resultData.createdAt).toLocaleDateString()}
               </p>
               <p>
                 <span className="font-semibold">Models Used: </span>
-                {resultData.modelsUsed}
+                {resultData.modelsUsed.length} AI Models
               </p>
               <p>
                 <span className="font-semibold">Type: </span>
-                {resultData.type}
-              </p>
-              <p>
-                <span className="font-semibold">Format: </span>
-                {resultData.format}
+                {resultData.fileType}
               </p>
             </div>
 

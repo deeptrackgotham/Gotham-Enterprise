@@ -1,25 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { fetchScans } from "@/lib/api";
+import { useUser } from "@clerk/nextjs";
 
 type ScanRecord = {
-  id: number;
-  name: string;
+  _id: string;
+  scanId: string;
+  fileName: string;
   date: string;
   status: "Authentic" | "Suspicious" | "Deepfake";
+  createdAt: string;
 };
 
-const scans: ScanRecord[] = [
-  { id: 1, name: "press_confrence_1", date: "Sep 21, 14:30", status: "Authentic" },
-  { id: 2, name: "press_confrence_2", date: "Sep 21, 14:30", status: "Authentic" },
-  { id: 3, name: "press_confrence_3", date: "Sep 21, 14:30", status: "Suspicious" },
-  { id: 4, name: "press_confrence_4", date: "Sep 21, 14:30", status: "Deepfake" },
-  { id: 5, name: "press_confrence_5", date: "Sep 21, 14:30", status: "Deepfake" },
-  { id: 6, name: "press_confrence_6", date: "Sep 21, 14:30", status: "Suspicious" },
-  { id: 7, name: "press_confrence_7", date: "Sep 21, 14:30", status: "Suspicious" },
+const defaultScans: ScanRecord[] = [
+  { _id: "1", scanId: "1", fileName: "press_confrence_1", date: "Sep 21, 14:30", status: "Authentic", createdAt: "" },
+  { _id: "2", scanId: "2", fileName: "press_confrence_2", date: "Sep 21, 14:30", status: "Authentic", createdAt: "" },
+  { _id: "3", scanId: "3", fileName: "press_confrence_3", date: "Sep 21, 14:30", status: "Suspicious", createdAt: "" },
 ];
 
 const statusColors: Record<ScanRecord["status"], string> = {
@@ -32,14 +32,45 @@ const tabs = ["All scans", "Authentic", "Suspicious", "Deepfake"];
 
 export default function HistoryPage() {
   const [activeTab, setActiveTab] = useState<string>("All scans");
+  const [scans, setScans] = useState<ScanRecord[]>(defaultScans);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { isSignedIn } = useUser();
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+
+    const loadScans = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchScans();
+        const formattedScans: ScanRecord[] = data.map((scan: any) => ({
+          _id: scan._id,
+          scanId: scan.scanId,
+          fileName: scan.fileName,
+          date: new Date(scan.createdAt).toLocaleDateString(),
+          status: scan.status.toLowerCase() === "authentic" ? "Authentic" :
+                  scan.status.toLowerCase() === "suspicious" ? "Suspicious" : "Deepfake",
+          createdAt: scan.createdAt,
+        }));
+        setScans(formattedScans);
+      } catch (error) {
+        console.error("Failed to load scans:", error);
+        setScans(defaultScans);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadScans();
+  }, [isSignedIn]);
 
   const filteredScans =
     activeTab === "All scans"
       ? scans
-      : scans.filter((scan) => scan.status === activeTab);
+      : scans.filter((scan: ScanRecord) => scan.status === activeTab);
 
-  const handleViewResults = (scanId: number) => {
+  const handleViewResults = (scanId: string) => {
     router.push(`/results/${scanId}`);
   };
 
@@ -70,6 +101,8 @@ export default function HistoryPage() {
           ))}
         </div>
 
+        {loading && <p className="text-center text-gray-500 dark:text-gray-400">Loading...</p>}
+
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full border-separate border-spacing-y-3">
@@ -83,16 +116,16 @@ export default function HistoryPage() {
             </thead>
             <tbody>
               {filteredScans.length > 0 ? (
-                filteredScans.map((scan) => (
+                filteredScans.map((scan: ScanRecord) => (
                   <tr
-                    key={scan.id}
+                    key={scan._id}
                     className="
                       bg-white dark:bg-black 
                       shadow-sm rounded-md overflow-hidden
-                      border border-gray-200 dark:border-transparent   /* REMOVE BORDER IN DARK MODE */
+                      border border-gray-200 dark:border-transparent
                     "
                   >
-                    <td className="px-4 py-3 font-medium">{scan.name}</td>
+                    <td className="px-4 py-3 font-medium">{scan.fileName}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{scan.date}</td>
                     <td className={`px-4 py-3 font-semibold ${statusColors[scan.status]}`}>
                       {scan.status}
@@ -111,12 +144,12 @@ export default function HistoryPage() {
                             className="
                               bg-white dark:bg-black 
                               rounded-md shadow-md 
-                              border border-gray-200 dark:border-transparent   /* REMOVE BORDER IN DARK MODE */
+                              border border-gray-200 dark:border-transparent
                               py-1 min-w-[150px] text-sm
                             "
                           >
                             <DropdownMenu.Item
-                              onClick={() => handleViewResults(scan.id)}
+                              onClick={() => handleViewResults(scan.scanId)}
                               className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer text-black dark:text-white"
                             >
                               View Results

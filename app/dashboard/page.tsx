@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -12,8 +14,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Eye, FileText, TrendingUp, Wallet } from "lucide-react";
+import { fetchScans } from "@/lib/api";
 
-const weeklyData = [
+const defaultWeeklyData = [
   { day: "Mon", Authentic: 15, Suspicious: 3, Deepfake: 2 },
   { day: "Tue", Authentic: 12, Suspicious: 5, Deepfake: 4 },
   { day: "Wed", Authentic: 18, Suspicious: 2, Deepfake: 3 },
@@ -23,31 +26,42 @@ const weeklyData = [
   { day: "Sun", Authentic: 4, Suspicious: 1, Deepfake: 0 },
 ];
 
-const recentScans = [
-  {
-    name: "press_conference_2024.mp4",
-    status: "Authentic",
-    color: "bg-green-600/70 dark:bg-green-500/70",
-    confidence: "98%",
-    time: "Sep 21, 14:30",
-  },
-  {
-    name: "interview_clip.mp4",
-    status: "Suspicious",
-    color: "bg-yellow-600/70 dark:bg-yellow-500/70",
-    confidence: "67%",
-    time: "Sep 21, 11:15",
-  },
-  {
-    name: "social_media_video.mp4",
-    status: "Deepfake",
-    color: "bg-red-600/70 dark:bg-red-500/70",
-    confidence: "94%",
-    time: "Sep 20, 16:45",
-  },
-];
-
 export default function Dashboard() {
+  const { isSignedIn, user } = useUser();
+  const [recentScans, setRecentScans] = useState<any[]>([]);
+  const [userCredits, setUserCredits] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const scans = await fetchScans();
+        const formatted = scans.slice(0, 3).map((scan: any) => ({
+          name: scan.fileName,
+          status: scan.status.charAt(0).toUpperCase() + scan.status.slice(1).toLowerCase(),
+          color:
+            scan.status === "AUTHENTIC"
+              ? "bg-green-600/70 dark:bg-green-500/70"
+              : scan.status === "SUSPICIOUS"
+              ? "bg-yellow-600/70 dark:bg-yellow-500/70"
+              : "bg-red-600/70 dark:bg-red-500/70",
+          confidence: `${scan.confidenceScore}%`,
+          time: new Date(scan.createdAt).toLocaleDateString(),
+        }));
+        setRecentScans(formatted);
+        setUserCredits(500 - (scans.length * 1));
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [isSignedIn]);
   return (
     <div className="min-h-screen bg-white dark:bg-black px-6 py-8">
       {/* Theme-aware CSS vars for chart colors */}
@@ -86,14 +100,14 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-black dark:text-white">425</div>
+              <div className="text-3xl font-bold text-black dark:text-white">{userCredits}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 of 500 credits
               </p>
-              <Progress value={85} className="h-2 mb-4" />
+              <Progress value={(userCredits / 500) * 100} className="h-2 mb-4" />
               <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-4">
-                <span>Daily Usage: 23</span>
-                <span>Est. Days Left: 18</span>
+                <span>Daily Usage: {500 - userCredits}</span>
+                <span>Est. Days Left: {Math.ceil(userCredits / ((500 - userCredits) || 1))}</span>
               </div>
               <Button className="w-full">Purchase Credits</Button>
             </CardContent>
@@ -108,30 +122,36 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {recentScans.map((scan, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between rounded-md bg-gray-50 dark:bg-black px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-                >
-                  {/* Left side */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-black dark:text-white">{scan.name}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {scan.time}
-                    </p>
-                  </div>
+              {loading ? (
+                <p className="text-center text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
+              ) : recentScans.length > 0 ? (
+                recentScans.map((scan, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between rounded-md bg-gray-50 dark:bg-black px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+                  >
+                    {/* Left side */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate text-black dark:text-white">{scan.name}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {scan.time}
+                      </p>
+                    </div>
 
-                  {/* Right side */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full text-white whitespace-nowrap ${scan.color}`}
-                    >
-                      {scan.status} ({scan.confidence})
-                    </span>
-                    <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400 cursor-pointer flex-shrink-0" />
+                    {/* Right side */}
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full text-white whitespace-nowrap ${scan.color}`}
+                      >
+                        {scan.status} ({scan.confidence})
+                      </span>
+                      <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400 cursor-pointer flex-shrink-0" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-center text-gray-500 dark:text-gray-400 text-sm">No scans yet</p>
+              )}
               <Button variant="outline" className="w-full">
                 View All Scans
               </Button>
@@ -148,7 +168,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={weeklyData}>
+                <BarChart data={defaultWeeklyData}>
                   <XAxis dataKey="day" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip

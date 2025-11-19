@@ -1,0 +1,40 @@
+import mongoose, { Schema, Document } from "mongoose";
+
+export interface IVerificationResult extends Document {
+  userId: string;
+  scanId: string;
+  fileName: string;
+  fileType: "image" | "video" | "audio";
+  status: "AUTHENTIC" | "SUSPICIOUS" | "DEEPFAKE";
+  confidenceScore: number;
+  modelsUsed: string[];
+  uploadedDate: Date;
+  imageUrl?: string;
+  description?: string;
+  features?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const verificationResultSchema = new Schema<IVerificationResult>(
+  {
+    userId: { type: String, required: true },
+    scanId: { type: String, required: true, unique: true },
+    fileName: { type: String, required: true },
+    fileType: { type: String, enum: ["image", "video", "audio"], required: true },
+    status: { type: String, enum: ["AUTHENTIC", "SUSPICIOUS", "DEEPFAKE"], required: true },
+    confidenceScore: { type: Number, required: true, min: 0, max: 100 },
+    modelsUsed: [{ type: String }],
+    uploadedDate: { type: Date, default: Date.now },
+    imageUrl: { type: String },
+    description: { type: String },
+    features: [{ type: String }],
+  },
+  { timestamps: true }
+);
+
+// Index for faster queries
+verificationResultSchema.index({ userId: 1, createdAt: -1 });
+
+export const VerificationResult =
+  mongoose.models?.VerificationResult || mongoose.model("VerificationResult", verificationResultSchema);

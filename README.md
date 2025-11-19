@@ -1,6 +1,6 @@
 # Gotham-Enterprise
 
-Enterprise-grade dashboard and verification platform for media authenticity, built on **Next.js**, **Tailwind CSS**, and **Clerk** authentication.
+Enterprise-grade dashboard and verification platform for media authenticity, built on **Next.js**, **Tailwind CSS**, **Clerk** authentication, and **MongoDB** database.
 
 ---
 
@@ -8,6 +8,8 @@ Enterprise-grade dashboard and verification platform for media authenticity, bui
 - [About](#about)  
 - [Key Features](#key-features)  
 - [Tech Stack](#tech-stack)  
+- [Quick Start](#quick-start)
+- [Database (MongoDB)](#database-mongodb)  
 - [Authentication (Clerk)](#authentication-clerk)  
 - [Getting Started](#getting-started)  
   - [Prerequisites](#prerequisites)  
@@ -25,11 +27,13 @@ Enterprise-grade dashboard and verification platform for media authenticity, bui
 It provides:
 
 - A modern **Next.js App Router** architecture  
+- **MongoDB** database for persistent data storage  
 - Image & URL-based verification flows  
 - Mobile-first, vertically stacked sections for clean UX  
 - Detailed media history and analytics  
 - Real-time verification results  
 - Role-based access via **Clerk authentication**  
+- User credit system for scan management
 - A sleek, minimal **dark UI** using Tailwind
 
 ---
@@ -37,6 +41,9 @@ It provides:
 ## Key Features
 
 - Upload **multiple images** or submit **remote URLs** for verification  
+- **Persistent scan history** stored in MongoDB
+- **Real-time dashboard** showing credit balance and recent scans
+- **Credit system** - Each scan costs 1 credit
 - Camera capture **disabled** by default for workflow consistency  
 - Vertical mobile layout: **Upload → Results → Quick Stats**  
 - Enterprise-grade **Verification History**, including:
@@ -45,8 +52,10 @@ It provides:
   - Verdict indicators  
   - Confidence progress bars  
   - Filtering + search  
+  - Delete functionality
 - Semi-transparent, outlined cards & tables for a premium feel  
 - Full authentication integration with Clerk  
+- **MongoDB integration** for user and scan persistence
 - Ready for team dashboards and permission-based environments  
 
 ---
@@ -60,7 +69,55 @@ It provides:
 | Styling | **Tailwind CSS** |
 | UI Library | **shadcn/ui**, **lucide-react** |
 | Auth | **Clerk** |
+| Database | **MongoDB** with **Mongoose ODM** |
 | Deployment | **Vercel** (recommended) or any Next.js-compatible host |
+
+---
+
+## Quick Start
+
+**Get running in 3 steps:**
+
+1. **Create `.env.local`:**
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/gotham-enterprise
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_key
+CLERK_SECRET_KEY=your_secret
+```
+
+2. **Install and run:**
+```bash
+npm install
+npm run dev
+```
+
+3. **Visit http://localhost:3000**
+
+See `SETUP_INSTRUCTIONS.md` or `QUICKSTART.md` for detailed setup.
+
+---
+
+## Database (MongoDB)
+
+This project uses **MongoDB** for data persistence:
+
+### Collections:
+- **users** - Clerk-synced user data with credit tracking
+- **verificationresults** - Scan results and verification history
+
+### Features:
+- ✅ Automatic user sync from Clerk
+- ✅ Credit system (5 initial credits per user)
+- ✅ Plan management (trial, starter, growth, enterprise)
+- ✅ Full scan history with timestamps
+- ✅ Indexed queries for performance
+
+### Setup:
+1. Create MongoDB project (free at https://mongodb.com/cloud/atlas)
+2. Get connection string
+3. Add to `.env.local` as `MONGODB_URI`
+
+See `MONGODB_SETUP.md` for complete database guide.
 
 ---
 
