@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       status: mappedStatus,
       confidenceScore,
       modelsUsed,
-      imageUrl: mediaUrl,
+      imageUrl: mediaUrl || `data:${body.fileType};base64,${base64}`, 
       description: JSON.stringify({ rd: rdResult }),
       features: rdResult.models?.map((m: RDModelResult) => `${m.name}:${m.status}:${Math.round(m.score * 100)}`) || [],
     });

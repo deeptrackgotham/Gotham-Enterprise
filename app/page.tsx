@@ -9,12 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createScan } from "@/lib/api";
 
+type UploadProgress = {
+  fileName: string;
+  status: "uploading" | "done" | "error";
+  progress: number;
+  error?: string;
+};
+
 export default function EnterpriseUpload() {
   const router = useRouter();
   const { isSignedIn } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [urlInput, setUrlInput] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([])
 
 const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const files = e.target.files;
@@ -28,51 +36,76 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   setLoading(true);
   setError(null);
 
+  const progressArray: UploadProgress[] = Array.from(files).map(f => ({
+      fileName: f.name,
+      status: "uploading",
+      progress: 0,
+    }));
+  setUploadProgress(progressArray); 
+
+  const updateProgress = (fileName: string, progress: number, status: UploadProgress["status"], error?: string) => {
+  setUploadProgress(prev =>
+    prev.map(p => p.fileName === fileName ? { ...p, progress, status, error } : p)
+  );
+};
+
+
   const results: any[] = [];
 
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    try {
-      // Convert to Base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => {
-          const result = reader.result as string;
-          const cleanBase64 = result.split(",")[1]; // strip prefix
-          resolve(cleanBase64);
-        };
-        reader.onerror = (err) => reject(err);
-      });
+for (let i = 0; i < files.length; i++) {
+  const file = files[i];
+  try {
+    // Convert to Base64 with progress
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
 
-      // Call API for each file
-      const response = await fetch("/api/scans", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type.startsWith("image/")
-            ? "image"
-            : file.type.startsWith("video/")
-            ? "video"
-            : "audio",
-          base64,
-        }),
-      });
+      reader.onloadstart = () => updateProgress(file.name, 0, "uploading");
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = (event.loaded / event.total) * 100;
+          updateProgress(file.name, percent, "uploading");
+        }
+      };
 
-      if (!response.ok) {
-        const errBody = await response.json().catch(() => null);
-        throw new Error(errBody?.error || "Failed to create scan");
-      }
+      reader.onload = () => {
+        updateProgress(file.name, 50, "uploading"); // halfway mark after reading
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = (err) => {
+        updateProgress(file.name, 0, "error", "File read failed");
+        reject(err);
+      };
+    });
 
-      const scanResult = await response.json();
-      results.push(scanResult);
+    // Call API
+    const response = await fetch("/api/scans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type.startsWith("image/") ? "image" :
+                  file.type.startsWith("video/") ? "video" : "audio",
+        base64,
+      }),
+    });
 
-    } catch (err: any) {
-      console.error("Upload error for", file.name, err);
-      results.push({ fileName: file.name, error: err.message });
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => null);
+      throw new Error(errBody?.error || "Failed to create scan");
     }
+
+    const scanResult = await response.json();
+    results.push(scanResult);
+    updateProgress(file.name, 100, "done");
+
+  } catch (err: any) {
+    console.error("Upload error for", file.name, err);
+    results.push({ fileName: file.name, error: err.message });
+    updateProgress(file.name, 0, "error", err.message);
   }
+}
 
   setLoading(false);
   
@@ -173,23 +206,24 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 </div>
 
 {/* Optional: display upload progress/results */}
-{/* {uploadProgress && uploadProgress.length > 0 && (
+{uploadProgress.length > 0 && (
   <ul className="mt-4 space-y-2">
     {uploadProgress.map((p, i) => (
       <li key={i} className="flex justify-between items-center">
-        <span>{p.fileName}</span>
-        <span>
-          {p.status === "done"
-            ? "✅"
-            : p.status === "error"
-            ? "❌"
-            : "⏳"}{" "}
-          {p.status === "uploading" && Math.round(p.progress)}%
+        <span className="font-medium">{p.fileName}</span>
+        <span className="flex items-center gap-2">
+          {p.status === "done" ? (
+            <span className="text-green-600">✅</span>
+          ) : p.status === "error" ? (
+            <span className="text-red-600">❌</span>
+          ) : (
+            <span className="text-blue-600">⏳ {Math.round(p.progress)}%</span>
+          )}
         </span>
       </li>
     ))}
   </ul>
-)} */}
+)}
 
               <div className="flex flex-col items-center justify-center ">
                 <UploadCloud className="h-10 w-10 text-sky-500 dark:text-sky-400 mb-3" />
