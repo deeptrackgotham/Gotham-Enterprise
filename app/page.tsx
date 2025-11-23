@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createScan } from "@/lib/api";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
+
 
 type UploadProgress = {
   fileName: string;
@@ -175,130 +177,121 @@ for (let i = 0; i < files.length; i++) {
       {/* Upload Area */}
 <main className="flex-1">
       <div className="mx-auto max-w-2xl px-6">
-        <Card className="shadow-lg border border-dashed border-sky-500 dark:border-sky-400 dark:bg-card/50 bg-white">
-          <CardContent className="p-8 space-y-10">
-            {error && (
-              <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
+<Card className="shadow-lg border border-dashed border-sky-500 dark:border-sky-400 dark:bg-card/50 bg-white rounded-2xl">
+  <CardContent className="p-8 space-y-8">
+    {error && (
+      <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-md text-sm">
+        {error}
+      </div>
+    )}
 
-            {/* File Upload */}
-            <div className="flex flex-col items-center justify-center border border-dashed border-slate-300 border-slate-500 hover:border-sky-500 rounded-xl p-10 dark:hover:border-sky-400 transition bg-white dark:bg-card">
-<div className="relative">
-  <label
-    htmlFor="file-input"
-    className={`cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition ${
-      loading ? "opacity-50 cursor-not-allowed" : ""
-    }`}
-  >
-    {loading ? "Uploading..." : "Upload Files"}
-  </label>
-<input
-  type="file"
-  id="file-input"
-  accept="image/*,video/*,audio/*"
-  multiple
-  onChange={handleFileUpload}
-  style={{ display: "none" }} // use inline style instead of className="hidden"
-  disabled={loading}
-/>
-</div>
-
-{/* Optional: display upload progress/results */}
-{uploadProgress.length > 0 && (
-  <ul className="mt-4 space-y-2">
-    {uploadProgress.map((p, i) => (
-      <li key={i} className="flex justify-between items-center">
-        <span className="font-medium">{p.fileName}</span>
-        <span className="flex items-center gap-2">
-          {p.status === "done" ? (
-            <span className="text-green-600">✅</span>
-          ) : p.status === "error" ? (
-            <span className="text-red-600">❌</span>
-          ) : (
-            <span className="text-blue-600">⏳ {Math.round(p.progress)}%</span>
-          )}
+    {/* File Upload Area */}
+    <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-sky-500 dark:hover:border-sky-400 rounded-xl p-10 transition bg-white dark:bg-card/50">
+      <UploadCloud className="h-12 w-12 text-sky-500 dark:text-sky-400 mb-3" />
+      <p className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
+        Upload Media for Verification
+      </p>
+      <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-3">
+        <span className="flex items-center gap-1">
+          <Video className="h-4 w-4" /> Video
         </span>
-      </li>
-    ))}
-  </ul>
-)}
+        <span className="flex items-center gap-1">
+          <ImageIcon className="h-4 w-4" /> Image
+        </span>
+        <span className="flex items-center gap-1">
+          <AudioWaveform className="h-4 w-4" /> Audio
+        </span>
+      </div>
 
-              <div className="flex flex-col items-center justify-center ">
-                <UploadCloud className="h-10 w-10 text-sky-500 dark:text-sky-400 mb-3" />
-                <p className="font-medium text-slate-700 dark:text-slate-200">
-                  Upload Media for Verification
-                </p>
-                <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-2 ">
-                  <span className="flex items-center gap-1">
-                    <Video className="h-4 w-4" /> Video Files
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <ImageIcon className="h-4 w-4" /> Image Files
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <AudioWaveform className="h-4 w-4" /> Audio Files
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-slate-400 dark:text-slate-400 text-center mb-3">
-                  (Max 10MB each) • Multiple files supported
-                </p>
+      {/* Browse Files Button */}
+      <Button
+        size="lg"
+        onClick={() => document.getElementById("file-input")?.click()}
+        disabled={loading}
+        className="bg-slate-900 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-600 text-white rounded-xl px-6"
+      >
+        {loading ? "Processing..." : "Browse Files"}
+      </Button>
 
-                <Button
-                  size="lg"
-                  onClick={() => document.getElementById("file-input")?.click()}
-                  disabled={loading}
-                  className="bg-slate-900 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-600 text-white rounded-xl px-6"
-                >
-                  {loading ? "Processing..." : "Browse Files"}
-                </Button>
+      <input
+        type="file"
+        id="file-input"
+        accept="image/*,video/*,audio/*"
+        multiple
+        onChange={handleFileUpload}
+        style={{ display: "none" }}
+        disabled={loading}
+      />
+
+      {/* Upload Progress */}
+      {uploadProgress.length > 0 && (
+        <div className="mt-6 w-full space-y-3">
+          {uploadProgress.map((p, i) => (
+            <div key={i} className="flex flex-col gap-1">
+              <div className="flex justify-between items-center text-sm">
+                <span className="font-medium truncate">{p.fileName}</span>
+                <span className="flex items-center gap-1 text-xs">
+                  {p.status === "done" && <CheckCircle className="h-4 w-4 text-green-600" />}
+                  {p.status === "error" && <XCircle className="h-4 w-4 text-red-600" />}
+                  {p.status === "uploading" && <Clock className="h-4 w-4 text-sky-600 animate-spin-slow" />}
+                  {p.status === "uploading" && <span>{Math.round(p.progress)}%</span>}
+              </span>
               </div>
+              {/* Progress Bar */}
+              {p.status === "uploading" && (
+                <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-2 bg-sky-500 dark:bg-sky-400 rounded-full transition-all"
+                    style={{ width: `${p.progress}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
 
+    {/* URL Scan */}
+    <div className="flex flex-col w-full">
+      <div className="relative w-full flex items-center my-6">
+        <Separator className="flex-1 bg-slate-300 dark:bg-slate-500" />
+        <span className="px-3 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <Link2 className="h-4 w-4 text-sky-500 dark:text-sky-400" />
+          Or add from URL
+        </span>
+        <Separator className="flex-1 bg-slate-300 dark:bg-slate-500" />
+      </div>
 
-{/* URL Scan */}
-<div className="flex flex-col items-center w-full">
-  <div className="relative w-full flex items-center my-6">
-    <Separator className="flex-1 bg-slate-300 dark:bg-slate-500" />
-    <span className="px-3 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
-      <Link2 className="h-4 w-4 text-sky-500 dark:sky-400" />
-      Or add from URL
-    </span>
-    <Separator className="flex-1 bg-slate-300 dark:bg-slate-500" />
-  </div>
+      <div className="flex w-full gap-2">
+        <input
+          type="text"
+          placeholder="Paste media URL here..."
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          disabled={loading}
+          className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-background/50 dark:text-white disabled:opacity-50"
+        />
+        <Button
+          size="default"
+          onClick={handleUrlSubmit}
+          disabled={loading}
+          className="bg-slate-900 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-600 text-white rounded-md px-4"
+        >
+          {loading ? "Processing..." : "Add File"}
+        </Button>
+      </div>
+    </div>
 
-  <div className="flex w-full gap-2">
-    <input
-      type="text"
-      placeholder="Paste media URL here..."
-      value={urlInput}
-      onChange={(e) => setUrlInput(e.target.value)}
-      disabled={loading}
-      className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-background/50 dark:text-white disabled:opacity-50"
-    />
-    <Button
-      size="default"
-      onClick={handleUrlSubmit}
-      disabled={loading}
-      className="bg-slate-900 hover:bg-sky-500 text-white dark:bg-sky-500 dark:hover:bg-sky-600 rounded-md px-4"
-    >
-      {loading ? "Processing..." : "Add File"}
-    </Button>
-  </div>
-</div>
-     <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
-              1 scan = 1 credit. Enterprise plans start at 500 credits/month.
-            </p>
+    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
+      1 scan = 1 credit. Enterprise plans start at 500 credits/month.
+    </p>
 
-
-          </div>
-          </CardContent>
-                      {/* Footer note */}
-            <p className="text-xs text-slate-500 dark:text-slate-200 text-center">
-              Max file size: 300MB. Accepted formats: JPG, PNG, MP3, WAV, MP4, WebM, MOV, AVI, WMV, MKV, FLV
-            </p>
-
-        </Card>
+    <p className="text-xs text-slate-500 dark:text-slate-200 text-center">
+      Max file size: 300MB. Accepted formats: JPG, PNG, MP3, WAV, MP4, WebM, MOV, AVI, WMV, MKV, FLV
+    </p>
+  </CardContent>
+</Card>
       </div>
     </main>
 <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 mb-8 mt-10 px-6">
