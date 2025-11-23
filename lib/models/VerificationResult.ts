@@ -22,7 +22,7 @@ const verificationResultSchema = new Schema<IVerificationResult>(
     scanId: { type: String, required: true, unique: true },
     fileName: { type: String, required: true },
     fileType: { type: String, enum: ["image", "video", "audio"], required: true },
-    status: { type: String, enum: ["AUTHENTIC", "SUSPICIOUS", "DEEPFAKE"], required: true },
+    status: { type: String, enum: ["PROCESSING","AUTHENTIC", "SUSPICIOUS", "DEEPFAKE"], required: true },
     confidenceScore: { type: Number, required: true, min: 0, max: 100 },
     modelsUsed: [{ type: String }],
     uploadedDate: { type: Date, default: Date.now },

@@ -11,59 +11,75 @@ import { createScan } from "@/lib/api";
 
 export default function EnterpriseUpload() {
   const router = useRouter();
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [urlInput, setUrlInput] = useState("");
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
 
-    if (!isSignedIn) {
-      router.push("/login");
-      return;
-    }
+  if (!isSignedIn) {
+    router.push("/login");
+    return;
+  }
 
+  setLoading(true);
+  setError(null);
+
+  const results: any[] = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
     try {
-      setLoading(true);
-      setError(null);
-
-      // Determine file type
-      const fileType = file.type.startsWith("image/")
-        ? "image"
-        : file.type.startsWith("video/")
-        ? "video"
-        : file.type.startsWith("audio/")
-        ? "audio"
-        : "image";
-
-      // Create a mock scan result (in production, you'd send to your verification service)
-      const mockResult = await createScan({
-        fileName: file.name,
-        fileType: fileType as "image" | "video" | "audio",
-        status: ["AUTHENTIC", "SUSPICIOUS", "DEEPFAKE"][Math.floor(Math.random() * 3)] as any,
-        confidenceScore: Math.random() * 100,
-        modelsUsed: ["ModelA", "ModelB"],
-        imageUrl: file.type.startsWith("image/")
-          ? URL.createObjectURL(file)
-          : "https://via.placeholder.com/280x180.png?text=Uploaded+File",
-        description: "Media verification scan completed",
-        features: [
-          "Advanced AI models trained on millions of authentic and manipulated images",
-          "Ensemble approach using multiple specialized detection algorithms",
-          "Real-time detection of deepfakes, AI-generated content, and manipulations",
-        ],
+      // Convert to Base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const result = reader.result as string;
+          const cleanBase64 = result.split(",")[1]; // strip prefix
+          resolve(cleanBase64);
+        };
+        reader.onerror = (err) => reject(err);
       });
 
-      router.push(`/results/${mockResult.scanId}`);
+      // Call API for each file
+      const response = await fetch("/api/scans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type.startsWith("image/")
+            ? "image"
+            : file.type.startsWith("video/")
+            ? "video"
+            : "audio",
+          base64,
+        }),
+      });
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => null);
+        throw new Error(errBody?.error || "Failed to create scan");
+      }
+
+      const scanResult = await response.json();
+      results.push(scanResult);
+
     } catch (err: any) {
-      console.error("Upload error:", err);
-      setError(err.message || "Failed to upload file");
-    } finally {
-      setLoading(false);
+      console.error("Upload error for", file.name, err);
+      results.push({ fileName: file.name, error: err.message });
     }
-  };
+  }
+
+  setLoading(false);
+
+  console.log("Bulk upload results:", results);
+  // optionally, navigate to a bulk results page
+  // router.push(`/results/bulk?ids=${results.map(r => r.scanId).join(",")}`);
+};
 
   const handleUrlSubmit = async () => {
     if (!urlInput.trim()) {
@@ -80,22 +96,20 @@ export default function EnterpriseUpload() {
       setLoading(true);
       setError(null);
 
-      const mockResult = await createScan({
-        fileName: new URL(urlInput).pathname.split("/").pop() || "media-file",
+      // Normalize URL: prepend https:// if missing
+      let normalizedUrl = urlInput.trim();
+      if (!/^https?:\/\//i.test(normalizedUrl)) {
+        normalizedUrl = "https://" + normalizedUrl;
+      }
+
+      // Submit to scan API
+      const result = await createScan({
+        fileName: new URL(normalizedUrl).pathname.split("/").pop() || "media-file",
         fileType: "image",
-        status: ["AUTHENTIC", "SUSPICIOUS", "DEEPFAKE"][Math.floor(Math.random() * 3)] as any,
-        confidenceScore: Math.random() * 100,
-        modelsUsed: ["ModelA", "ModelB"],
-        imageUrl: urlInput,
-        description: "Media verification scan completed",
-        features: [
-          "Advanced AI models trained on millions of authentic and manipulated images",
-          "Ensemble approach using multiple specialized detection algorithms",
-          "Real-time detection of deepfakes, AI-generated content, and manipulations",
-        ],
+        url: normalizedUrl,
       });
 
-      router.push(`/results/${mockResult.scanId}`);
+      router.push(`/results/${result.scanId}`);
     } catch (err: any) {
       console.error("URL scan error:", err);
       setError(err.message || "Failed to scan URL");
@@ -131,14 +145,44 @@ export default function EnterpriseUpload() {
 
             {/* File Upload */}
             <div className="flex flex-col items-center justify-center border border-dashed border-slate-300 border-slate-500 hover:border-sky-500 rounded-xl p-10 dark:hover:border-sky-400 transition bg-white dark:bg-card">
-              <input
-                type="file"
-                id="file-input"
-                accept="image/*,video/*,audio/*"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={loading}
-              />
+<div className="relative">
+  <label
+    htmlFor="file-input"
+    className={`cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition ${
+      loading ? "opacity-50 cursor-not-allowed" : ""
+    }`}
+  >
+    {loading ? "Uploading..." : "Upload Files"}
+  </label>
+<input
+  type="file"
+  id="file-input"
+  accept="image/*,video/*,audio/*"
+  multiple
+  onChange={handleFileUpload}
+  style={{ display: "none" }} // use inline style instead of className="hidden"
+  disabled={loading}
+/>
+</div>
+
+{/* Optional: display upload progress/results */}
+{/* {uploadProgress && uploadProgress.length > 0 && (
+  <ul className="mt-4 space-y-2">
+    {uploadProgress.map((p, i) => (
+      <li key={i} className="flex justify-between items-center">
+        <span>{p.fileName}</span>
+        <span>
+          {p.status === "done"
+            ? "✅"
+            : p.status === "error"
+            ? "❌"
+            : "⏳"}{" "}
+          {p.status === "uploading" && Math.round(p.progress)}%
+        </span>
+      </li>
+    ))}
+  </ul>
+)} */}
 
               <div className="flex flex-col items-center justify-center ">
                 <UploadCloud className="h-10 w-10 text-sky-500 dark:text-sky-400 mb-3" />
