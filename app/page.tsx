@@ -75,10 +75,17 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 
   setLoading(false);
+  
+  if (results.length === 1) {
+    console.log("Single upload result:", results);
+  // Single file → go to single result page
+  router.push(`/results/${results[0].scanId}`);
+} else {
+    console.log("Bulk upload results:", results);
+  // Multiple files → go to bulk results page
+  router.push(`/results/bulk?ids=${results.map(r => r.scanId).join(",")}`);
+}
 
-  console.log("Bulk upload results:", results);
-  // optionally, navigate to a bulk results page
-  // router.push(`/results/bulk?ids=${results.map(r => r.scanId).join(",")}`);
 };
 
   const handleUrlSubmit = async () => {
