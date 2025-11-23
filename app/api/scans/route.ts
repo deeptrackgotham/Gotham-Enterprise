@@ -1,3 +1,4 @@
+// app/api/scans/route.ts
 import { connectToDatabase } from "@/lib/db";
 import { VerificationResult } from "@/lib/models/VerificationResult";
 import { User } from "@/lib/models/User";
@@ -6,7 +7,24 @@ import { verifyMediaBulk, BulkMedia } from "@/lib/verifyMediaBulk";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-// POST: Create a new scan/verification (single or bulk)
+// GET: fetch all scans for the signed-in user
+export async function GET() {
+  try {
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await connectToDatabase();
+
+    const scans = await VerificationResult.find({ userId }).sort({ createdAt: -1 });
+
+    return NextResponse.json(scans, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching scans:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// POST: create new scan(s)
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -27,12 +45,11 @@ export async function POST(req: NextRequest) {
         fileName: f.fileName,
       }));
 
-      const bulkResults = await verifyMediaBulk(bulkItems, 3); // 3 concurrent by default
+      const bulkResults = await verifyMediaBulk(bulkItems, 3);
 
-      // Save each result in DB and deduct credits
       const savedResults = [];
-      for (const { media, result, error } of bulkResults) {
-        if (!result) continue; // skip failed ones
+      for (const { media, result } of bulkResults) {
+        if (!result) continue;
 
         const overallScore = typeof result.score === "number" ? result.score : 0;
         const confidenceScore = Math.round(overallScore * 100);
@@ -59,7 +76,6 @@ export async function POST(req: NextRequest) {
         await vr.save();
         savedResults.push(vr);
 
-        // Deduct credit per file
         user.credits -= 1;
       }
       await user.save();
@@ -67,7 +83,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(savedResults, { status: 201 });
     }
 
-    // Single-file verification (existing logic)
+    // Single-file verification
     const mediaUrl = (body.fileUrl || body.imageUrl || body.url) as string | undefined;
     const base64 = body.base64 as string | undefined;
 
@@ -81,7 +97,6 @@ export async function POST(req: NextRequest) {
       rdResult = await verifyMedia({ url: mediaUrl, fileType: body.fileType });
     }
 
-    // Map RD result
     const overallScore = typeof rdResult.score === "number" ? rdResult.score : 0;
     const confidenceScore = Math.round(overallScore * 100);
     let mappedStatus: "AUTHENTIC" | "SUSPICIOUS" | "DEEPFAKE" = "SUSPICIOUS";
