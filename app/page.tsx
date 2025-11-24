@@ -92,10 +92,15 @@ for (let i = 0; i < files.length; i++) {
         base64,
       }),
     });
-
+    
+    const data = await response.json();
     if (!response.ok) {
-      const errBody = await response.json().catch(() => null);
-      throw new Error(errBody?.error || "Failed to create scan");
+        setError(data.error || "Upload failed");
+        setLoading(false);
+
+        // Stop processing this file and do not push to results page
+        updateProgress(file.name, 0, "error", data.error || "Upload failed");
+        return; 
     }
 
     const scanResult = await response.json();
@@ -106,19 +111,26 @@ for (let i = 0; i < files.length; i++) {
     console.error("Upload error for", file.name, err);
     results.push({ fileName: file.name, error: err.message });
     updateProgress(file.name, 0, "error", err.message);
+    setError(err.message);
+    setLoading(false);
+    return;
   }
 }
 
   setLoading(false);
   
-  if (results.length === 1) {
-    console.log("Single upload result:", results);
-  // Single file → go to single result page
-  router.push(`/results/${results[0].scanId}`);
+const successfulResults = results.filter(r => r.status === "done");
+
+if (successfulResults.length === 0) {
+  return;
+}
+
+if (successfulResults.length === 1) {
+  console.log("Single upload result:", successfulResults);
+  router.push(`/results/${successfulResults[0].scanId}`);
 } else {
-    console.log("Bulk upload results:", results);
-  // Multiple files → go to bulk results page
-  router.push(`/results/bulk?ids=${results.map(r => r.scanId).join(",")}`);
+  console.log("Bulk upload results:", successfulResults);
+  router.push(`/results/bulk?ids=${successfulResults.map(r => r.scanId).join(",")}`);
 }
 
 };
