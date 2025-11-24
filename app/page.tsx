@@ -38,86 +38,100 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   setLoading(true);
   setError(null);
 
+  // Initialize progress for each file
   const progressArray: UploadProgress[] = Array.from(files).map(f => ({
-      fileName: f.name,
-      status: "uploading",
-      progress: 0,
-    }));
-  setUploadProgress(progressArray); 
+    fileName: f.name,
+    status: "uploading",
+    progress: 0,
+  }));
+  setUploadProgress(progressArray);
 
-  const updateProgress = (fileName: string, progress: number, status: UploadProgress["status"], error?: string) => {
-  setUploadProgress(prev =>
-    prev.map(p => p.fileName === fileName ? { ...p, progress, status, error } : p)
-  );
-};
-
+  const updateProgress = (
+    fileName: string,
+    progress: number,
+    status: UploadProgress["status"],
+    error?: string
+  ) => {
+    setUploadProgress(prev =>
+      prev.map(p =>
+        p.fileName === fileName ? { ...p, progress, status, error } : p
+      )
+    );
+  };
 
   const results: any[] = [];
 
-for (let i = 0; i < files.length; i++) {
-  const file = files[i];
-  try {
-    // Convert to Base64 with progress
-    const base64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
 
-      reader.onloadstart = () => updateProgress(file.name, 0, "uploading");
-      reader.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percent = (event.loaded / event.total) * 100;
-          updateProgress(file.name, percent, "uploading");
-        }
-      };
+    try {
+      // Convert file to Base64 with progress
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
 
-      reader.onload = () => {
-        updateProgress(file.name, 50, "uploading"); // halfway mark after reading
-        const result = reader.result as string;
-        resolve(result.split(",")[1]);
-      };
-      reader.onerror = (err) => {
-        updateProgress(file.name, 0, "error", "File read failed");
-        reject(err);
-      };
-    });
+        reader.onloadstart = () => updateProgress(file.name, 0, "uploading");
+        reader.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = (event.loaded / event.total) * 100;
+            updateProgress(file.name, percent / 2, "uploading"); // half progress for reading
+          }
+        };
+        reader.onload = () => {
+          updateProgress(file.name, 50, "uploading"); // reading done, halfway
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = () => {
+          updateProgress(file.name, 0, "error", "File read failed");
+          reject(new Error("File read failed"));
+        };
+      });
 
-    // Call API
-    const response = await fetch("/api/scans", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fileName: file.name,
-        fileType: file.type.startsWith("image/") ? "image" :
-                  file.type.startsWith("video/") ? "video" : "audio",
-        base64,
-      }),
-    });
-    
-    const data = await response.json();
-    if (!response.ok) {
-        setError(data.error || "Upload failed");
+      // Call API
+      const response = await fetch("/api/scans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type.startsWith("image/")
+            ? "image"
+            : file.type.startsWith("video/")
+            ? "video"
+            : "audio",
+          base64,
+        }),
+      });
+
+      const result = await response.json(); // read only once
+
+      if (!response.ok) {
+        const errMsg = result.error || "Upload failed";
+        setError(errMsg);
+        updateProgress(file.name, 0, "error", errMsg);
         setLoading(false);
+        continue; // skip this file and continue with the next
+      }
 
-        // Stop processing this file and do not push to results page
-        updateProgress(file.name, 0, "error", data.error || "Upload failed");
-        return; 
+      // Success
+      results.push(result);
+      updateProgress(file.name, 100, "done");
+    } catch (err: any) {
+      console.error("Upload error for", file.name, err);
+      updateProgress(file.name, 0, "error", err.message);
+      setError(err.message);
+      setLoading(false);
     }
-
-    const scanResult = await response.json();
-    results.push(scanResult);
-    updateProgress(file.name, 100, "done");
-
-  } catch (err: any) {
-    console.error("Upload error for", file.name, err);
-    results.push({ fileName: file.name, error: err.message });
-    updateProgress(file.name, 0, "error", err.message);
-    setError(err.message);
-    setLoading(false);
-    return;
   }
-}
 
   setLoading(false);
+
+  // Navigate to results page if at least one successful file
+  if (results.length === 1) {
+    router.push(`/results/${results[0].scanId}`);
+  } else if (results.length > 1) {
+    router.push(`/results/bulk?ids=${results.map(r => r.scanId).join(",")}`);
+  }
   
 const successfulResults = results.filter(r => r.status === "done");
 
