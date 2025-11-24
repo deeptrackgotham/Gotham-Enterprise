@@ -34,7 +34,12 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const user = await User.findOne({ clerkId: userId });
-    if (!user) return NextResponse.json({ error: "Insufficient credits" }, { status: 402 });
+    if (!user || user.credit < 1) {
+      return NextResponse.json(
+        { error: "Insufficient credits" },
+        { status: 402 }
+      );
+    }
 
     // Handle bulk verification
     if (Array.isArray(body.files) && body.files.length > 0) {
