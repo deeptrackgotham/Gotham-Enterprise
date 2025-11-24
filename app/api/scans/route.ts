@@ -1,4 +1,3 @@
-// app/api/scans/route.ts
 import { connectToDatabase } from "@/lib/db";
 import { VerificationResult } from "@/lib/models/VerificationResult";
 import { User } from "@/lib/models/User";
@@ -6,6 +5,13 @@ import verifyMedia, { RDModelResult } from "@/lib/realityDefender";
 import { verifyMediaBulk, BulkMedia } from "@/lib/verifyMediaBulk";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+
+interface IncomingFile {
+  base64?: string;
+  url?: string;
+  fileType: string;
+  fileName: string;
+}
 
 // GET: fetch all scans for the signed-in user
 export async function GET() {
@@ -34,7 +40,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const user = await User.findOne({ clerkId: userId });
-    if (!user || user.credit < 1) {
+    if (!user || user.credits <= 0) {
       return NextResponse.json(
         { error: "Insufficient credits" },
         { status: 402 }
@@ -43,8 +49,10 @@ export async function POST(req: NextRequest) {
 
     // Handle bulk verification
     if (Array.isArray(body.files) && body.files.length > 0) {
-      const bulkItems: BulkMedia[] = body.files.map(f => ({
-        fileBuffer: f.base64 ? Buffer.from(f.base64.replace(/^data:.+;base64,/, ""), "base64") : undefined,
+      const bulkItems: BulkMedia[] = body.files.map((f: IncomingFile) => ({
+        fileBuffer: f.base64
+          ? Buffer.from(f.base64.replace(/^data:.+;base64,/, ""), "base64")
+          : undefined,
         url: f.url,
         fileType: f.fileType,
         fileName: f.fileName,
@@ -53,6 +61,7 @@ export async function POST(req: NextRequest) {
       const bulkResults = await verifyMediaBulk(bulkItems, 3);
 
       const savedResults = [];
+
       for (const { media, result } of bulkResults) {
         if (!result) continue;
 
@@ -61,9 +70,12 @@ export async function POST(req: NextRequest) {
 
         let mappedStatus: "AUTHENTIC" | "SUSPICIOUS" | "DEEPFAKE" = "SUSPICIOUS";
         if (result.status === "AUTHENTIC") mappedStatus = "AUTHENTIC";
-        else if (result.status === "MANIPULATED") mappedStatus = overallScore >= 0.5 ? "DEEPFAKE" : "SUSPICIOUS";
+        else if (result.status === "MANIPULATED")
+          mappedStatus = overallScore >= 0.5 ? "DEEPFAKE" : "SUSPICIOUS";
 
-        const modelsUsed = Array.isArray(result.models) ? result.models.map(m => m.name) : [];
+        const modelsUsed = Array.isArray(result.models)
+          ? result.models.map((m) => m.name)
+          : [];
 
         const vr = new VerificationResult({
           userId,
@@ -75,14 +87,18 @@ export async function POST(req: NextRequest) {
           modelsUsed,
           imageUrl: media.url,
           description: JSON.stringify({ rd: result }),
-          features: result.models?.map((m: RDModelResult) => `${m.name}:${m.status}:${Math.round(m.score * 100)}`) || [],
+          features:
+            result.models?.map(
+              (m: RDModelResult) =>
+                `${m.name}:${m.status}:${Math.round(m.score * 100)}`
+            ) || [],
         });
 
         await vr.save();
         savedResults.push(vr);
-
         user.credits -= 1;
       }
+
       await user.save();
 
       return NextResponse.json(savedResults, { status: 201 });
@@ -100,6 +116,13 @@ export async function POST(req: NextRequest) {
       rdResult = await verifyMedia({ fileBuffer: buffer, fileType: body.fileType });
     } else if (mediaUrl) {
       rdResult = await verifyMedia({ url: mediaUrl, fileType: body.fileType });
+    }
+    
+    if (!rdResult) {
+    return NextResponse.json(
+      { error: "Failed to retrieve Reality Defender results" },
+      { status: 500 }
+    );
     }
 
     const overallScore = typeof rdResult.score === "number" ? rdResult.score : 0;
