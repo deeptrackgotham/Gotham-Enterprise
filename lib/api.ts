@@ -99,3 +99,45 @@ export async function deleteResult(scanId: string) {
     throw error;
   }
 }
+
+export async function createPaystackTransaction(amount: number, credits: number) {
+  try {
+    const response = await fetch("/api/paystack/initialize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ amount, credits }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => null);
+      throw new Error(errBody?.error || "Failed to initialize payment");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error initializing paystack transaction:", error);
+    throw error;
+  }
+}
+
+export async function verifyPaystackTransaction(reference: string) {
+  try {
+    const response = await fetch("/api/paystack/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ reference }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => null);
+      throw new Error(errBody?.error || "Failed to verify payment");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error verifying paystack transaction:", error);
+    throw error;
+  }
+}

@@ -26,6 +26,18 @@ const defaultWeeklyData = [
   { day: "Sun", Authentic: 4, Suspicious: 1, Deepfake: 0 },
 ];
 
+// Helper to fetch user credits
+async function fetchUserCredits() {
+  try {
+    const res = await fetch("/api/users/sync", { method: "GET", credentials: "include" });
+    if (!res.ok) return 0;
+    const user = await res.json();
+    return user?.credits || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export default function Dashboard() {
   const { isSignedIn, user } = useUser();
   const [recentScans, setRecentScans] = useState<any[]>([]);
@@ -39,6 +51,8 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const scans = await fetchScans();
+        const credits = await fetchUserCredits();
+        
         const formatted = scans.slice(0, 3).map((scan: any) => ({
           name: scan.fileName,
           status: scan.status.charAt(0).toUpperCase() + scan.status.slice(1).toLowerCase(),
@@ -52,7 +66,7 @@ export default function Dashboard() {
           time: new Date(scan.createdAt).toLocaleDateString(),
         }));
         setRecentScans(formatted);
-        setUserCredits(500 - (scans.length * 1));
+        setUserCredits(credits);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
@@ -102,14 +116,14 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-3xl font-bold text-black dark:text-white">{userCredits}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                of 500 credits
+                credits available
               </p>
-              <Progress value={(userCredits / 500) * 100} className="h-2 mb-4" />
+              <Progress value={Math.min((userCredits / 500) * 100, 100)} className="h-2 mb-4" />
               <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-4">
-                <span>Daily Usage: {500 - userCredits}</span>
-                <span>Est. Days Left: {Math.ceil(userCredits / ((500 - userCredits) || 1))}</span>
+                <span>Used: {Math.max(0, 500 - userCredits)}</span>
+                <span>% Remaining: {Math.round((userCredits / (userCredits + Math.max(0, 500 - userCredits))) * 100) || 0}%</span>
               </div>
-              <Button className="w-full">Purchase Credits</Button>
+              <Button className="w-full" onClick={() => window.location.href = '/pricing-billing'}>Purchase More Credits</Button>
             </CardContent>
           </Card>
 

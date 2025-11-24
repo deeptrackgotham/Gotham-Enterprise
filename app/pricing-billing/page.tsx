@@ -1,161 +1,247 @@
 "use client";
 
-import React, { useState } from "react";
-import { Info } from "lucide-react";
+import { useState } from "react";
+import { Check, Zap } from "lucide-react";
+import { createPaystackTransaction } from "@/lib/api";
 
 export default function PricingBillingPage() {
-  const [yearly, setYearly] = useState(true);
+  const [loadingRef, setLoadingRef] = useState<string | null>(null);
+
+  // Test credit packages with KES amounts for Paystack
+  const creditPacks = [
+    { id: "small", amount: 500, credits: 50, label: "50 Credits", savings: null },
+    { id: "medium", amount: 2000, credits: 300, label: "300 Credits", savings: "17% off" },
+    { id: "large", amount: 4000, credits: 650, label: "650 Credits", savings: "25% off" },
+  ];
 
   const plans = [
     {
       id: "trial",
-      name: "Trial Plan",
+      name: "Trial",
       price: "Free",
-      description: "To test accuracy and workflow fit",
+      description: "Get started",
+      credits: 5,
       features: [
-        { text: "1 user max", info: "Limited to a single user account" },
-        { text: "5 credits", info: "Each scan consumes 1 credit" },
-        { text: "30 days", info: "Trial expires 30 days after signup" },
+        "5 scan credits",
+        "Basic results",
+        "30-day access",
+        "Email support",
       ],
-      badgeColor: "bg-blue-500",
+      highlighted: false,
     },
     {
       id: "starter",
-      name: "Starter Plan",
-      price: yearly ? "$99/year" : "$99/month",
-      description: "For freelancers, small agencies, fact-checkers",
+      name: "Starter",
+      price: "$ 99/mo",
+      description: "For individuals",
+      credits: 100,
       features: [
-        { text: "1 user max", info: "Only one team member can use this plan" },
-        { text: "100 credits", info: "100 verification scans included" },
-        { text: "Basic reporting", info: "Downloadable PDF summaries only" },
+        "100 scan credits/month",
+        "Advanced analytics",
+        "API access",
+        "Priority support",
+        "Custom branding",
       ],
-      badgeColor: "bg-sky-500",
+      highlighted: false,
     },
     {
       id: "growth",
-      name: "Growth Plan",
-      price: yearly ? "$499/year" : "$499/month",
-      description: "For media houses, mid-size financial teams",
+      name: "Growth",
+      price: "$ 499/mo",
+      description: "Most popular",
+      credits: 1000,
       features: [
-        { text: "1,000 credits", info: "1,000 scans included" },
-        {
-          text: "Advanced reporting",
-          info: "Custom dashboards, CSV exports, and scheduled reports",
-        },
-        {
-          text: "API integration for newsroom/organization workflows",
-          info: "Access to REST API for automation and integrations",
-        },
+        "1,000 scan credits/month",
+        "Real-time dashboards",
+        "Webhook integrations",
+        "Team collaboration (5 users)",
+        "24/7 phone support",
+        "Advanced reporting",
       ],
-      badgeColor: "bg-cyan-600",
+      highlighted: true,
     },
     {
       id: "enterprise",
-      name: "Enterprise Plan",
-      price: "Contact Sales",
-      description: "For governments, banks, insurers, large media networks",
+      name: "Enterprise",
+      price: "Custom",
+      description: "For large teams",
+      credits: 10000,
       features: [
-        { text: "10,000+ credits", info: "Scalable limits for heavy usage" },
-        {
-          text: "Real-time monitoring and alerts",
-          info: "Get instant fraud alerts and live dashboard updates",
-        },
-        {
-          text: "Dedicated support, SLAs, compliance tools",
-          info: "Priority 24/7 support and compliance certifications",
-        },
-        {
-          text: "Multi-team access and audit logs",
-          info: "Role-based access and detailed activity logs",
-        },
+        "10,000+ scan credits/month",
+        "Dedicated account manager",
+        "SLA guarantees",
+        "Multi-team management",
+        "Compliance & audit logs",
+        "Custom integrations",
       ],
-      badgeColor: "bg-teal-700",
+      highlighted: false,
     },
   ];
 
-  return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white">
-      <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-12">
-        <h1 className="text-3xl font-bold mb-10">Pricing & Billing</h1>
 
-        {/* Billing Toggle */}
-        <div className="flex justify-end items-center mb-10 gap-3">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-400">
-            Billed Yearly
-          </span>
-          <button
-            onClick={() => setYearly(!yearly)}
-            className={`relative inline-flex items-center h-6 rounded-full w-12 transition-colors ${
-              yearly ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-800"
-            }`}
-          >
-            <span
-              className={`inline-block w-5 h-5 transform bg-white rounded-full transition-transform ${
-                yearly ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-400">
-            Billed Monthly
-          </span>
+  const handleBuyCredits = async (pack: typeof creditPacks[0]) => {
+    try {
+      setLoadingRef(pack.id);
+      const res = await createPaystackTransaction(pack.amount, pack.credits);
+      const authorizationUrl = res?.data?.authorization_url;
+      if (authorizationUrl) {
+        window.location.href = authorizationUrl;
+      } else {
+        alert("Failed to initialize payment. Check console.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error initializing payment. See console for details.");
+    } finally {
+      setLoadingRef(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 text-slate-900 dark:text-white">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4">Simple, Transparent Pricing</h1>
+          <p className="text-xl text-slate-600 dark:text-slate-400 mb-8">
+            Choose the perfect plan for your verification needs
+          </p>
+
+          {/* Quick Buy Credits Section */}
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 mb-12">
+            <h2 className="text-2xl font-semibold mb-6">Buy Credits Now</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {creditPacks.map((pack) => (
+                <button
+                  key={pack.id}
+                  onClick={() => handleBuyCredits(pack)}
+                  disabled={!!loadingRef}
+                  className="group relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 hover:shadow-lg transition-all disabled:opacity-50"
+                >
+                  {pack.savings && (
+                    <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      {pack.savings}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{pack.label}</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 mb-4">$ {pack.amount.toLocaleString()}</p>
+                  <div className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg w-full transition-colors">
+                    {loadingRef === pack.id ? "Processing..." : "Buy Now"}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
+              💡 Test amount in $. Each credit = 1 scan verification
+            </p>
+          </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Pricing Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="bg-white dark:bg-black rounded-xl shadow-md border border-gray-200 dark:border-gray-800 p-6 flex flex-col justify-between hover:shadow-lg transition-shadow"
+              className={`relative rounded-xl transition-all duration-300 ${
+                plan.highlighted
+                  ? "lg:scale-105 bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-2xl"
+                  : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md hover:shadow-lg border border-slate-200 dark:border-slate-700"
+              }`}
             >
-              {/* Badge */}
-              <div
-                className={`text-white text-sm px-4 py-1 rounded-full inline-block mb-4 ${plan.badgeColor}`}
-              >
-                {plan.name}
+              {/* Popular Badge */}
+              {plan.highlighted && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-red-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                    Most Popular
+                  </span>
+                </div>
+              )}
+
+              <div className="p-8">
+                {/* Plan name and description */}
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <p className={plan.highlighted ? "text-blue-100" : "text-slate-600 dark:text-slate-400"}>
+                  {plan.description}
+                </p>
+
+                {/* Price */}
+                <div className="my-6">
+                  <span className="text-4xl font-bold">{plan.price}</span>
+                  {plan.id !== "trial" && plan.id !== "enterprise" && (
+                    <span className={plan.highlighted ? "text-blue-100" : "text-slate-600 dark:text-slate-400"}>
+                      {" "}/month
+                    </span>
+                  )}
+                </div>
+
+                {/* CTA Button */}
+                {plan.id === "trial" ? (
+                  <button className={`w-full py-3 rounded-lg font-semibold mb-6 transition-all ${
+                    plan.highlighted
+                      ? "bg-white text-blue-600 hover:bg-blue-50"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}>
+                    Get Started
+                  </button>
+                ) : plan.id === "enterprise" ? (
+                  <button className={`w-full py-3 rounded-lg font-semibold mb-6 transition-all ${
+                    plan.highlighted
+                      ? "bg-white text-blue-600 hover:bg-blue-50"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600"
+                  }`}>
+                    Contact Sales
+                  </button>
+                ) : (
+                  <button className={`w-full py-3 rounded-lg font-semibold mb-6 transition-all ${
+                    plan.highlighted
+                      ? "bg-white text-blue-600 hover:bg-blue-50"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}>
+                    Choose Plan
+                  </button>
+                )}
+
+                {/* Features */}
+                <ul className="space-y-3">
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <span className={`text-sm ${plan.highlighted ? "text-blue-50" : ""}`}>
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-              {/* Price */}
-              <h2 className="text-2xl font-semibold mb-2">{plan.price}</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-                {plan.description}
-              </p>
-
-              {/* Features with Tooltips */}
-              <ul className="space-y-3 text-sm text-gray-800 dark:text-gray-300 flex-grow">
-                {plan.features.map((feature, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-center justify-between relative group"
-                  >
-                    <span>• {feature.text}</span>
-                    <Info className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-pointer" />
-
-                    {/* Tooltip */}
-                    <div className="absolute right-6 top-0 opacity-0 group-hover:opacity-100 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-md px-3 py-2 w-48 transition-opacity duration-200 z-10">
-                      {feature.info}
-                    </div>
-                  </li>
-                ))}
-              </ul>
             </div>
           ))}
         </div>
 
-        {/* Add-On Credits & Notes */}
-        <div className="text-center mt-12 text-sm text-gray-700 dark:text-gray-400">
-          <p className="mb-3">
-            Add-On Credits: <strong>$1 per scan</strong> (billed in packs of 100)
-            after plan limits are reached
-          </p>
-          <p className="mb-3">
-            All prices are in USD and are charged per member with applicable
-            taxes added at checkout
-          </p>
-          <button className="border border-gray-300 dark:border-gray-800 rounded-full px-6 py-2 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
-            View All plan features
-          </button>
+        {/* FAQ / Info Section */}
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg">
+            <h4 className="text-lg font-semibold mb-2">No Credit Card Required</h4>
+            <p className="text-slate-600 dark:text-slate-400">
+              Start with our free trial. Upgrade anytime.
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg">
+            <h4 className="text-lg font-semibold mb-2">Flexible Billing</h4>
+            <p className="text-slate-600 dark:text-slate-400">
+              Pay as you go or subscribe to save more.
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg">
+            <h4 className="text-lg font-semibold mb-2">Cancel Anytime</h4>
+            <p className="text-slate-600 dark:text-slate-400">
+              No contracts or hidden fees. Cancel with one click.
+            </p>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
