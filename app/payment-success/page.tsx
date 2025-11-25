@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering to avoid prerender issues
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
@@ -26,10 +29,8 @@ export default function PaymentSuccessPage() {
       try {
         setStatus("loading");
         const result = await verifyPaystackTransaction(reference);
-        
+
         if (result.success) {
-          // Calculate credits added (we need to know the previous balance)
-          // For now, we'll display the current balance
           setUserCredits(result.credits || 0);
           setStatus("success");
         } else {
