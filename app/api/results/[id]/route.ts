@@ -2,12 +2,13 @@ import { connectToDatabase } from "@/lib/db";
 import { VerificationResult } from "@/lib/models/VerificationResult";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import type { RequestContext } from "next/server";
 
 // GET: Fetch specific result by scanId
-export async function GET(req: NextRequest, context: RequestContext) {
-  const { params } = context;
-  const { id } = params as { id: string }; // cast to expected structure
+export async function GET(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
 
   try {
     const { userId } = await auth();
@@ -35,9 +36,11 @@ export async function GET(req: NextRequest, context: RequestContext) {
 }
 
 // DELETE: Delete a result
-export async function DELETE(req: NextRequest, context: RequestContext) {
-  const { params } = context;
-  const { id } = params as { id: string };
+export async function DELETE(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
 
   try {
     const { userId } = await auth();
