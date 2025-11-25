@@ -7,12 +7,7 @@ import UserSyncProvider from "@/components/user-sync-provider";
 // import { ThemeProvider } from "@/components/theme-provider";
 // import Footer from "@/components/ui/footer";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-  weight: ["400", "700"],
-});
+const inter = { className: "font-sans" };
 
 export const metadata: Metadata = {
   title: "Deeptrack Gotham",
