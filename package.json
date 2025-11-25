@@ -6,8 +6,6 @@
     "dev": "next dev",
     "start": "next start",
     "lint": "eslint",
-    "start-worker": "npm run build-worker && node -r dotenv/config dist-workers/scanWorker.js",
-    "build-worker": "tsc -p tsconfig.worker.json",
     "build": "next build"
   },
   "dependencies": {
