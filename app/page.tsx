@@ -151,43 +151,57 @@ if (successfulResults.length === 1) {
 
 };
 
-  const handleUrlSubmit = async () => {
-    if (!urlInput.trim()) {
-      setError("Please enter a URL");
-      return;
+const handleUrlSubmit = async () => {
+  if (!urlInput.trim()) {
+    setError("Please enter a URL");
+    return;
+  }
+
+  if (!isSignedIn) {
+    router.push("/login");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    // Normalize
+    let normalizedUrl = urlInput.trim();
+    if (!/^https?:\/\//i.test(normalizedUrl)) {
+      normalizedUrl = "https://" + normalizedUrl;
     }
 
-    if (!isSignedIn) {
-      router.push("/login");
-      return;
-    }
+    // Detect file type from URL
+    const fileType = getFileTypeFromUrl(normalizedUrl);
 
-    try {
-      setLoading(true);
-      setError(null);
+    const result = await createScan({
+      fileName: new URL(normalizedUrl).pathname.split("/").pop() || "media-file",
+      fileType,
+      url: normalizedUrl,
+    });
 
-      // Normalize URL: prepend https:// if missing
-      let normalizedUrl = urlInput.trim();
-      if (!/^https?:\/\//i.test(normalizedUrl)) {
-        normalizedUrl = "https://" + normalizedUrl;
-      }
+    router.push(`/results/${result.scanId}`);
+  } catch (err: unknown) {
+    console.error("URL scan error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    setError(message || "Failed to scan URL");
+  } finally {
+    setLoading(false);
+  }
+};
 
-      // Submit to scan API
-      const result = await createScan({
-        fileName: new URL(normalizedUrl).pathname.split("/").pop() || "media-file",
-        fileType: "image",
-        url: normalizedUrl,
-      });
+const getFileTypeFromUrl = (url: string) => {
+  const ext = url.split(".").pop()?.toLowerCase();
 
-      router.push(`/results/${result.scanId}`);
-    } catch (err: unknown) {
-      console.error("URL scan error:", err);
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message || "Failed to scan URL");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!ext) return "image";
+
+  if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext)) return "image";
+  if (["mp4", "mov", "avi", "webm", "mkv"].includes(ext)) return "video";
+  if (["mp3", "wav", "ogg", "m4a"].includes(ext)) return "audio";
+
+  return "image";
+};
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white dark:from-background dark:to-background" >

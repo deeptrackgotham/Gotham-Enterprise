@@ -39,27 +39,22 @@ export async function fetchScans() {
   }
 }
 
-export async function createScan(scanData: {
-  fileName: string;
-  fileType: "image" | "video" | "audio";
-  status: "AUTHENTIC" | "SUSPICIOUS" | "DEEPFAKE";
-  confidenceScore: number;
-  modelsUsed: string[];
-  imageUrl?: string;
-  description?: string;
-  features?: string[];
-}) {
+import type { CreateScanInput } from "@/lib/types";
+
+export async function createScan(scanData: CreateScanInput) {
   try {
     const scanId = `scan-${Date.now()}`;
+
     const response = await fetch("/api/scans", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
         scanId,
-        ...scanData,
+        ...scanData, // includes url or file
       }),
     });
+
     if (!response.ok) {
       const errBody = await response.json().catch(() => null);
       throw new Error(errBody?.error || "Failed to create scan");

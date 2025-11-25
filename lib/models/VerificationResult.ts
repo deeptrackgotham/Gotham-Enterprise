@@ -10,6 +10,7 @@ export interface IVerificationResult extends Document {
   modelsUsed: string[];
   uploadedDate: Date;
   imageUrl?: string;
+  url?: string;    
   description?: string;
   features?: string[];
   createdAt: Date;
@@ -27,8 +28,10 @@ const verificationResultSchema = new Schema<IVerificationResult>(
     modelsUsed: [{ type: String }],
     uploadedDate: { type: Date, default: Date.now },
     imageUrl: { type: String },
+    url: { type: String },
     description: { type: String },
     features: [{ type: String }],
+
   },
   { timestamps: true }
 );

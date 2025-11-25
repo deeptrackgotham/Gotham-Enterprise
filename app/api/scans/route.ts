@@ -142,6 +142,7 @@ export async function POST(req: NextRequest) {
       confidenceScore,
       modelsUsed,
       imageUrl: mediaUrl || `data:${body.fileType};base64,${base64}`, 
+      url: body.url || mediaUrl, 
       description: JSON.stringify({ rd: rdResult }),
       features: rdResult.models?.map((m: RDModelResult) => `${m.name}:${m.status}:${Math.round(m.score * 100)}`) || [],
     });
