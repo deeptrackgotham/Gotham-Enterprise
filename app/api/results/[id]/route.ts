@@ -3,11 +3,16 @@ import { VerificationResult } from "@/lib/models/VerificationResult";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
+interface RouteParams {
+  id: string;
+}
+
 // GET: Fetch specific result by scanId
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: RouteParams }
 ) {
+  const { params } = context;
   try {
     const { userId } = await auth();
 
@@ -36,8 +41,9 @@ export async function GET(
 // DELETE: Delete a result
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: RouteParams }
 ) {
+  const { params } = context;
   try {
     const { userId } = await auth();
 
