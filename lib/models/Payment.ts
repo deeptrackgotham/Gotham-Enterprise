@@ -9,7 +9,7 @@ export interface IPayment extends Document {
   credits: number;
   status: string;
   processed: boolean;
-  raw?: any;
+  raw?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }

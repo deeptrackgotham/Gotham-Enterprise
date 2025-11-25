@@ -41,14 +41,15 @@ export async function verifyMedia(options: {
 
   try {
     console.log("RD import attempt...");
-    const RD = require("@realitydefender/realitydefender");
-    console.log("RD loaded:", Object.keys(RD));
+    type RDModuleShape = { RealityDefender?: unknown; default?: unknown } & Record<string, unknown>;
+    const RDmod = (await import("@realitydefender/realitydefender")) as RDModuleShape;
+    const RDModule = (RDmod.default ?? RDmod) as RDModuleShape;
+    console.log("RD loaded:", Object.keys(RDModule || {}));
 
     const apiKey = process.env.REALITY_DEFENDER_API_KEY;
     if (!apiKey) throw new Error("REALITY_DEFENDER_API_KEY not set");
 
-    // Instantiate client
-    const client = new RD.RealityDefender({ apiKey });
+    // Instantiate client will be resolved below based on module shape
 
     // Prepare local file
     let filePath: string;
@@ -58,7 +59,13 @@ export async function verifyMedia(options: {
       fs.writeFileSync(tmpPath, options.fileBuffer);
       filePath = tmpPath;
     } else if (options.url) {
-      const response = await fetch(options.url, { headers: options.headers });
+      // Normalize IncomingHttpHeaders -> HeadersInit
+      const headersObj: Record<string, string> | undefined = options.headers
+        ? Object.fromEntries(
+            Object.entries(options.headers as Record<string, unknown>).map(([k, v]) => [k, String(v)])
+          )
+        : undefined;
+      const response = await fetch(options.url, { headers: headersObj });
       if (!response.ok) throw new Error(`Failed to fetch URL: ${response.status}`);
       const arrayBuffer = await response.arrayBuffer();
       const ext = path.extname(options.url) || ".png";
@@ -71,11 +78,39 @@ export async function verifyMedia(options: {
 
     console.log("Calling RD.detect with:", { filePath, type: options.fileType || "image" });
 
-    // Upload + analyze — detect() returns full result now
-    const detectResp = await client.detect({
-      filePath,
-      type: options.fileType || "image",
-    });
+    // Upload + analyze — prefer `detect` or `scan.create` depending on SDK
+    // Resolve a possible constructor from module
+    type RDClientType = {
+      detect?: (opts: { filePath: string; type: string }) => Promise<unknown>;
+      scan?: { create?: (opts: { filePath: string; type: string }) => Promise<unknown>; result?: (id: string) => Promise<unknown> };
+      create?: (opts: { filePath: string; type: string }) => Promise<unknown>;
+      [key: string]: unknown;
+    };
+
+    type RDConstructorType = new (opts: { apiKey: string }) => RDClientType;
+
+    const RDConstructor = (RDModule.RealityDefender ?? (RDModule as unknown)) as unknown as RDConstructorType;
+    const client = new RDConstructor({ apiKey }) as RDClientType;
+
+    const detectFunc = typeof client.detect === "function" ? client.detect.bind(client) : undefined;
+    const scanCreateFunc = client.scan?.create ? client.scan.create.bind(client.scan) : undefined;
+
+    type DetectResp = {
+      id?: string;
+      requestId?: string;
+      status?: string;
+      score?: number;
+      models?: Partial<RDModelResult>[];
+      [key: string]: unknown;
+    };
+
+    const rawResp = scanCreateFunc
+      ? await scanCreateFunc({ filePath, type: options.fileType || "image" })
+      : detectFunc
+      ? await detectFunc({ filePath, type: options.fileType || "image" })
+      : await client.create?.({ filePath, type: options.fileType || "image" });
+
+    const detectResp = (rawResp ?? {}) as DetectResp;
 
     const jobId = detectResp?.id || detectResp?.requestId;
     if (!jobId) throw new Error("Reality Defender did not return a job ID");
@@ -85,14 +120,14 @@ export async function verifyMedia(options: {
     // Map and return result
     return {
       requestId: jobId,
-      status: detectResp.status,
-      score: detectResp.score ?? 0,
+      status: detectResp.status ?? "UNKNOWN",
+      score: typeof detectResp.score === "number" ? detectResp.score : Number(String(detectResp.score ?? "0")) || 0,
       models:
-        detectResp.models?.map((m: any) => ({
-          name: m.name,
-          status: m.status,
-          score: m.score,
-        })) ?? [],
+          detectResp.models?.map((m: Partial<RDModelResult>) => ({
+            name: m.name || "unknown",
+            status: m.status || "UNKNOWN",
+            score: typeof m.score === "number" ? m.score : Number(m.score) || 0,
+          })) ?? [],
     };
   } catch (err) {
     console.error("Reality Defender verification failed:", err);

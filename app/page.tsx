@@ -59,7 +59,8 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     );
   };
 
-  const results: any[] = [];
+  type ScanCreateResponse = { scanId: string; status?: string; [key: string]: unknown };
+  const results: ScanCreateResponse[] = [];
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -116,10 +117,11 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       // Success
       results.push(result);
       updateProgress(file.name, 100, "done");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error for", file.name, err);
-      updateProgress(file.name, 0, "error", err.message);
-      setError(err.message);
+      const message = err instanceof Error ? err.message : String(err);
+      updateProgress(file.name, 0, "error", message);
+      setError(message);
       setLoading(false);
     }
   }
@@ -178,9 +180,10 @@ if (successfulResults.length === 1) {
       });
 
       router.push(`/results/${result.scanId}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("URL scan error:", err);
-      setError(err.message || "Failed to scan URL");
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || "Failed to scan URL");
     } finally {
       setLoading(false);
     }

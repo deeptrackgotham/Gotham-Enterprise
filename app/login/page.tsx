@@ -41,10 +41,11 @@ export default function Login() {
       }
 
       console.log("Login not complete:", result);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      const message =
-        e?.errors?.[0]?.longMessage || e?.errors?.[0]?.message || e.message || "Invalid login";
+      type ClerkErr = { errors?: Array<{ longMessage?: string; message?: string }>; message?: string };
+      const errObj = e as ClerkErr;
+      const message = errObj?.errors?.[0]?.longMessage || errObj?.errors?.[0]?.message || (e instanceof Error ? e.message : String(e)) || "Invalid login";
       setErr(message);
     } finally {
       setLoading(false);
@@ -64,10 +65,11 @@ export default function Login() {
         redirectUrl: "/sso-callback",
         redirectUrlComplete: "/",
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      const message =
-        e?.errors?.[0]?.longMessage || e?.errors?.[0]?.message || "Google sign-in failed";
+      type ClerkErr = { errors?: Array<{ longMessage?: string; message?: string }>; };
+      const errObj = e as ClerkErr;
+      const message = errObj?.errors?.[0]?.longMessage || errObj?.errors?.[0]?.message || "Google sign-in failed";
       setErr(message);
     }
   }

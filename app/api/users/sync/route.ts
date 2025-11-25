@@ -1,9 +1,9 @@
 import { connectToDatabase } from "@/lib/db";
 import { User } from "@/lib/models/User";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     const { userId } = await auth();
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const { userId } = await auth();
 

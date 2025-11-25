@@ -14,7 +14,6 @@ export default function PaymentSuccessPage() {
   const reference = searchParams.get("reference");
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [creditsAdded, setCreditsAdded] = useState(0);
   const [userCredits, setUserCredits] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -37,9 +36,10 @@ export default function PaymentSuccessPage() {
           setStatus("error");
           setErrorMessage(result.message || "Payment verification failed");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setStatus("error");
-        setErrorMessage(err.message || "Error verifying payment");
+        const message = err instanceof Error ? err.message : String(err);
+        setErrorMessage(message || "Error verifying payment");
       }
     };
 

@@ -39,8 +39,9 @@ async function fetchUserCredits() {
 }
 
 export default function Dashboard() {
-  const { isSignedIn, user } = useUser();
-  const [recentScans, setRecentScans] = useState<any[]>([]);
+  const { isSignedIn } = useUser();
+  type RecentScan = { name: string; status: string; color: string; confidence: string; time: string };
+  const [recentScans, setRecentScans] = useState<RecentScan[]>([]);
   const [userCredits, setUserCredits] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -53,7 +54,8 @@ export default function Dashboard() {
         const scans = await fetchScans();
         const credits = await fetchUserCredits();
         
-        const formatted = scans.slice(0, 3).map((scan: any) => ({
+        type ApiScan = { fileName: string; status: string; confidenceScore: number; createdAt: string };
+        const formatted = (scans as ApiScan[]).slice(0, 3).map((scan) => ({
           name: scan.fileName,
           status: scan.status.charAt(0).toUpperCase() + scan.status.slice(1).toLowerCase(),
           color:
@@ -64,7 +66,7 @@ export default function Dashboard() {
               : "bg-red-600/70 dark:bg-red-500/70",
           confidence: `${scan.confidenceScore}%`,
           time: new Date(scan.createdAt).toLocaleDateString(),
-        }));
+        } as RecentScan));
         setRecentScans(formatted);
         setUserCredits(credits);
       } catch (error) {

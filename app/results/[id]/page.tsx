@@ -53,16 +53,16 @@ export default function ResultsPage() {
         let rdModels: RDModel[] = [];
         try {
           const parsed = data.description ? JSON.parse(data.description) : {};
-          const rd = parsed?.rd;
+          const rd = parsed?.rd as { models?: Partial<RDModel>[] } | undefined;
           if (rd?.models?.length) {
-            rdModels = rd.models.map((m: any) => ({
-              name: m.name,
-              status: m.status,
-              score: m.score,
+            rdModels = rd.models.map((m) => ({
+              name: String(m.name || "unknown"),
+              status: String(m.status || "UNKNOWN"),
+              score: typeof m.score === "number" ? m.score : Number(m.score) || 0,
             }));
           }
-        } catch (err) {
-          console.warn("Failed to parse RD result:", err);
+        } catch (err: unknown) {
+          console.warn("Failed to parse RD result:", err instanceof Error ? err.message : String(err));
         }
 
         setResultData({

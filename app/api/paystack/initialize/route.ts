@@ -5,6 +5,18 @@ import { User } from "@/lib/models/User";
 
 const PAYSTACK_INIT_URL = "https://api.paystack.co/transaction/initialize";
 
+interface PaymentPayload {
+  email: string;
+  amount: number;
+  currency: string;
+  metadata: {
+    credits: number;
+    clerkId: string;
+  };
+  callback_url?: string;
+}
+
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -38,11 +50,14 @@ export async function POST(req: NextRequest) {
     // Paystack expects amount in the smallest currency unit (e.g., cents for USD)
     const amountInSmallest = Math.round(Number(amount) * 100);
 
-    const payload: any = {
+    const payload: PaymentPayload = {
       email: user.email,
       amount: amountInSmallest,
       currency,
-      metadata: { credits, clerkId: userId },
+      metadata: {
+        credits,
+        clerkId: userId,
+      },
     };
 
     // Construct callback URL to payment success page (will include reference as query param)

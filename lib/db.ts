@@ -6,10 +6,16 @@ if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
 }
 
-let cached = global.mongoose;
+interface CachedMongoose {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+const globalWithMongoose = global as unknown as { mongoose?: CachedMongoose };
+let cached = globalWithMongoose.mongoose;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = globalWithMongoose.mongoose = { conn: null, promise: null } as CachedMongoose;
 }
 
 export async function connectToDatabase() {
@@ -39,7 +45,8 @@ export async function connectToDatabase() {
   return cached.conn;
 }
 
-// Extend global type to include mongoose
+// Extend global type to include mongoose cache
 declare global {
-  var mongoose: any;
+  // A lightweight cached container used during development to avoid multiple connections.
+  var mongoose: CachedMongoose | undefined;
 }

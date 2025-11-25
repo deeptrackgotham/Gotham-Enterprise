@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import { fetchResult } from "@/lib/api";
 import { useUser } from "@clerk/nextjs";
 
+// Strongly-typed ResultData interface
 interface ResultData {
   fileName: string;
   scanId: string;
-  status: string;
+  status: "AUTHENTIC" | "SUSPICIOUS" | "FAKE" | string;
   confidenceScore: number;
   createdAt: string;
   fileType: string;
@@ -20,11 +21,8 @@ interface ResultData {
   features: string[];
 }
 
-interface ResultCardProps {
-  result: ResultData;
-}
-
-const ResultCard: React.FC<ResultCardProps> = ({ result }) => (
+// Component to render a single result card
+const ResultCard: React.FC<{ result: ResultData }> = ({ result }) => (
   <div className="bg-white dark:bg-black rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-800">
     <div className="w-full h-[180px] rounded-lg overflow-hidden mb-4 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
       <Image
@@ -59,7 +57,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ result }) => (
       {result.scanId}
     </p>
     <ul className="text-sm space-y-1">
-      {result.features?.map((feature, idx) => (
+      {result.features.map((feature, idx) => (
         <li key={idx} className="flex items-center gap-2">
           <Check className="text-blue-600 dark:text-blue-400 w-4 h-4 flex-shrink-0" />
           {feature}
@@ -71,8 +69,9 @@ const ResultCard: React.FC<ResultCardProps> = ({ result }) => (
 
 export default function BulkResultsPage() {
   const searchParams = useSearchParams();
-  const idsParam = searchParams.get("ids");
+  const idsParam = searchParams.get("ids") || "";
   const { isSignedIn } = useUser();
+
   const [results, setResults] = useState<ResultData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,27 +79,32 @@ export default function BulkResultsPage() {
   useEffect(() => {
     if (!isSignedIn || !idsParam) return;
 
-    const scanIds = idsParam.split(",");
+    const scanIds = idsParam.split(",").map((id) => id.trim()).filter(Boolean);
+
+    if (!scanIds.length) {
+      setError("No valid scan IDs provided.");
+      setLoading(false);
+      return;
+    }
 
     const loadResults = async () => {
       try {
-        setLoading(true);
         const fetchedResults: ResultData[] = [];
 
         for (const id of scanIds) {
           try {
             const data = await fetchResult(id);
             fetchedResults.push({
-              fileName: data.fileName,
+              fileName: data.fileName || "Unknown",
               scanId: data.scanId,
               status: data.status,
-              confidenceScore: data.confidenceScore,
+              confidenceScore: data.confidenceScore ?? 0,
               createdAt: data.createdAt,
-              fileType: data.fileType,
-              modelsUsed: data.modelsUsed || [],
+              fileType: data.fileType ?? "unknown",
+              modelsUsed: data.modelsUsed ?? [],
               imageUrl: data.imageUrl || "https://via.placeholder.com/280x180.png?text=Detected+Image",
-              description: data.description || "",
-              features: data.features || [],
+              description: data.description ?? "",
+              features: data.features ?? [],
             });
           } catch (err) {
             console.error(`Failed to fetch result ${id}`, err);
@@ -110,7 +114,7 @@ export default function BulkResultsPage() {
         setResults(fetchedResults);
       } catch (err) {
         console.error("Failed to load bulk results:", err);
-        setError("Failed to load bulk results");
+        setError("Failed to load bulk results.");
       } finally {
         setLoading(false);
       }

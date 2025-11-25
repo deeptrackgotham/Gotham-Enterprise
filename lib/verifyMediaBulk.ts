@@ -26,8 +26,9 @@ export async function verifyMediaBulk(
           fileType: media.fileType,
         });
         results.push({ media, result: res });
-      } catch (err: any) {
-        results.push({ media, error: err.message || "Verification failed" });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        results.push({ media, error: message || "Verification failed" });
       }
     }
   };

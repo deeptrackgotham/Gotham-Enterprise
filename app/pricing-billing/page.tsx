@@ -104,9 +104,10 @@ export default function PricingBillingPage() {
   };
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  type Plan = typeof plans[number];
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
-  const openPlanCurrencyModal = (plan: any) => {
+  const openPlanCurrencyModal = (plan: Plan) => {
     setSelectedPlan(plan);
     setShowCurrencyModal(true);
   };
