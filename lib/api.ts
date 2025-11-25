@@ -100,13 +100,13 @@ export async function deleteResult(scanId: string) {
   }
 }
 
-export async function createPaystackTransaction(amount: number, credits: number) {
+export async function createPaystackTransaction(amount: number, credits: number, currency: string = "KES") {
   try {
     const response = await fetch("/api/paystack/initialize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ amount, credits }),
+      body: JSON.stringify({ amount, credits, currency }),
     });
 
     if (!response.ok) {

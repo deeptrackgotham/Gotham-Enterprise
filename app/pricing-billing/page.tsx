@@ -7,11 +7,11 @@ import { createPaystackTransaction } from "@/lib/api";
 export default function PricingBillingPage() {
   const [loadingRef, setLoadingRef] = useState<string | null>(null);
 
-  // Test credit packages with KES amounts for Paystack
+  // Test credit packages with both KES and USD amounts for Paystack
   const creditPacks = [
-    { id: "small", amount: 500, credits: 50, label: "50 Credits", savings: null },
-    { id: "medium", amount: 2000, credits: 300, label: "300 Credits", savings: "17% off" },
-    { id: "large", amount: 4000, credits: 650, label: "650 Credits", savings: "25% off" },
+    { id: "small", kesAmount: 64800, usdAmount: 500, credits: 50, label: "50 Credits", savings: null },
+    { id: "medium", kesAmount: 259200, usdAmount: 2000, credits: 300, label: "300 Credits", savings: "17% off" },
+    { id: "large", kesAmount: 518400, usdAmount: 4000, credits: 650, label: "650 Credits", savings: "25% off" },
   ];
 
   const plans = [
@@ -32,7 +32,9 @@ export default function PricingBillingPage() {
     {
       id: "starter",
       name: "Starter",
-      price: "$ 99/mo",
+      price: "KES 12,830 / $99",
+      kesAmount: 12830,
+      usdAmount: 99,
       description: "For individuals",
       credits: 100,
       features: [
@@ -47,7 +49,9 @@ export default function PricingBillingPage() {
     {
       id: "growth",
       name: "Growth",
-      price: "$ 499/mo",
+      price: "KES 64,670 / $499",
+      kesAmount: 64670,
+      usdAmount: 499,
       description: "Most popular",
       credits: 1000,
       features: [
@@ -79,19 +83,45 @@ export default function PricingBillingPage() {
   ];
 
 
-  const handleBuyCredits = async (pack: typeof creditPacks[0]) => {
+  const handleBuyCredits = async (pack: typeof creditPacks[0], currency: "KES" | "USD") => {
     try {
-      setLoadingRef(pack.id);
-      const res = await createPaystackTransaction(pack.amount, pack.credits);
+      setLoadingRef(pack.id + "-" + currency);
+      const amount = currency === "KES" ? pack.kesAmount : pack.usdAmount;
+      const res = await createPaystackTransaction(amount, pack.credits, currency);
       const authorizationUrl = res?.data?.authorization_url;
       if (authorizationUrl) {
         window.location.href = authorizationUrl;
       } else {
+        console.error("No authorization URL returned", res);
         alert("Failed to initialize payment. Check console.");
       }
     } catch (err) {
       console.error(err);
       alert("Error initializing payment. See console for details.");
+    } finally {
+      setLoadingRef(null);
+    }
+  };
+
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
+  const openPlanCurrencyModal = (plan: any) => {
+    setSelectedPlan(plan);
+    setShowCurrencyModal(true);
+  };
+
+  const choosePlanCurrency = async (currency: "KES" | "USD") => {
+    if (!selectedPlan) return;
+    try {
+      setShowCurrencyModal(false);
+      setLoadingRef(selectedPlan.id + "-plan-" + currency);
+      const amount = currency === "KES" ? selectedPlan.kesAmount : selectedPlan.usdAmount;
+      await createPaystackTransaction(amount, selectedPlan.credits, currency);
+      // redirect will happen in createPaystackTransaction flow
+    } catch (err) {
+      console.error(err);
+      alert("Error initializing plan purchase. See console.");
     } finally {
       setLoadingRef(null);
     }
@@ -112,12 +142,7 @@ export default function PricingBillingPage() {
             <h2 className="text-2xl font-semibold mb-6">Buy Credits Now</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {creditPacks.map((pack) => (
-                <button
-                  key={pack.id}
-                  onClick={() => handleBuyCredits(pack)}
-                  disabled={!!loadingRef}
-                  className="group relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 hover:shadow-lg transition-all disabled:opacity-50"
-                >
+                <div key={pack.id} className="group relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 hover:shadow-lg transition-all">
                   {pack.savings && (
                     <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                       {pack.savings}
@@ -127,18 +152,48 @@ export default function PricingBillingPage() {
                     <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{pack.label}</span>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 mb-4">$ {pack.amount.toLocaleString()}</p>
-                  <div className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg w-full transition-colors">
-                    {loadingRef === pack.id ? "Processing..." : "Buy Now"}
+                  <p className="text-slate-600 dark:text-slate-400 mb-4">KES {pack.kesAmount.toLocaleString()} • $ {pack.usdAmount.toLocaleString()}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleBuyCredits(pack, "KES")}
+                      disabled={!!loadingRef}
+                      className="flex-1 bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 py-2 rounded-lg font-semibold"
+                    >
+                      {loadingRef === pack.id + "-KES" ? "Processing..." : `Local — KES ${pack.kesAmount}`}
+                    </button>
+                    <button
+                      onClick={() => handleBuyCredits(pack, "USD")}
+                      disabled={!!loadingRef}
+                      className="flex-1 bg-blue-600 text-white hover:bg-blue-700 py-2 rounded-lg font-semibold"
+                    >
+                      {loadingRef === pack.id + "-USD" ? "Processing..." : `International — $${pack.usdAmount}`}
+                    </button>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-              💡 Test amount in $. Each credit = 1 scan verification
+              💡   Each credit = 1 scan verification
             </p>
           </div>
         </div>
+
+        {/* Currency modal for plan purchase */}
+        {showCurrencyModal && selectedPlan && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-xl font-semibold mb-4">Choose payment currency</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Select Local (KES) or International (USD) for the <strong>{selectedPlan.name}</strong> plan.</p>
+              <div className="flex gap-3">
+                <button onClick={() => choosePlanCurrency("KES")} className="flex-1 bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 py-2 rounded-lg font-semibold">Local — KES {selectedPlan.kesAmount?.toLocaleString() || "—"}</button>
+                <button onClick={() => choosePlanCurrency("USD")} className="flex-1 bg-blue-600 text-white hover:bg-blue-700 py-2 rounded-lg font-semibold">International — ${selectedPlan.usdAmount || "—"}</button>
+              </div>
+              <div className="mt-4 text-right">
+                <button onClick={() => setShowCurrencyModal(false)} className="text-sm text-slate-500 hover:underline">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pricing Plans */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -195,7 +250,7 @@ export default function PricingBillingPage() {
                     Contact Sales
                   </button>
                 ) : (
-                  <button className={`w-full py-3 rounded-lg font-semibold mb-6 transition-all ${
+                  <button onClick={() => openPlanCurrencyModal(plan)} className={`w-full py-3 rounded-lg font-semibold mb-6 transition-all ${
                     plan.highlighted
                       ? "bg-white text-blue-600 hover:bg-blue-50"
                       : "bg-blue-600 text-white hover:bg-blue-700"
