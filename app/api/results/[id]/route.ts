@@ -2,17 +2,13 @@ import { connectToDatabase } from "@/lib/db";
 import { VerificationResult } from "@/lib/models/VerificationResult";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-
-interface RouteParams {
-  id: string;
-}
+import type { RequestContext } from "next/server";
 
 // GET: Fetch specific result by scanId
-export async function GET(
-  req: NextRequest,
-  context: { params: RouteParams }
-) {
+export async function GET(req: NextRequest, context: RequestContext) {
   const { params } = context;
+  const { id } = params as { id: string }; // cast to expected structure
+
   try {
     const { userId } = await auth();
 
@@ -23,7 +19,7 @@ export async function GET(
     await connectToDatabase();
 
     const result = await VerificationResult.findOne({
-      scanId: params.id,
+      scanId: id,
       userId,
     });
 
@@ -39,11 +35,10 @@ export async function GET(
 }
 
 // DELETE: Delete a result
-export async function DELETE(
-  req: NextRequest,
-  context: { params: RouteParams }
-) {
+export async function DELETE(req: NextRequest, context: RequestContext) {
   const { params } = context;
+  const { id } = params as { id: string };
+
   try {
     const { userId } = await auth();
 
@@ -54,7 +49,7 @@ export async function DELETE(
     await connectToDatabase();
 
     const result = await VerificationResult.findOneAndDelete({
-      scanId: params.id,
+      scanId: id,
       userId,
     });
 
