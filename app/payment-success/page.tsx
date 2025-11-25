@@ -30,16 +30,15 @@ export default function PaymentSuccessPage() {
         const result = await verifyPaystackTransaction(reference);
 
         if (result.success) {
-          setUserCredits(result.credits || 0);
+          setUserCredits(result.credits ?? 0);
           setStatus("success");
         } else {
           setStatus("error");
-          setErrorMessage(result.message || "Payment verification failed");
+          setErrorMessage(result.message ?? "Payment verification failed");
         }
       } catch (err: unknown) {
         setStatus("error");
-        const message = err instanceof Error ? err.message : String(err);
-        setErrorMessage(message || "Error verifying payment");
+        setErrorMessage(err instanceof Error ? err.message : String(err));
       }
     };
 
@@ -106,9 +105,7 @@ export default function PaymentSuccessPage() {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               Payment Verification Failed
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              {errorMessage}
-            </p>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">{errorMessage}</p>
 
             <div className="space-y-3">
               <button
