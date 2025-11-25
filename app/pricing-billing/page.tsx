@@ -6,6 +6,8 @@ import { createPaystackTransaction } from "@/lib/api";
 
 export default function PricingBillingPage() {
   const [loadingRef, setLoadingRef] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
 
   // Test credit packages with both KES and USD amounts for Paystack
   const creditPacks = [
@@ -117,7 +119,15 @@ export default function PricingBillingPage() {
     try {
       setShowCurrencyModal(false);
       setLoadingRef(selectedPlan.id + "-plan-" + currency);
-      const amount = currency === "KES" ? selectedPlan.kesAmount : selectedPlan.usdAmount;
+    const amount =
+      currency === "KES"
+        ? selectedPlan.kesAmount
+        : selectedPlan.usdAmount;
+
+        if (amount == null) {
+          setError("Invalid pricing configuration. Please contact support.");
+          return;
+        }
       await createPaystackTransaction(amount, selectedPlan.credits, currency);
       // redirect will happen in createPaystackTransaction flow
     } catch (err) {
@@ -141,6 +151,12 @@ export default function PricingBillingPage() {
           {/* Quick Buy Credits Section */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 mb-12">
             <h2 className="text-2xl font-semibold mb-6">Buy Credits Now</h2>
+                {error && (
+              <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {creditPacks.map((pack) => (
                 <div key={pack.id} className="group relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 hover:shadow-lg transition-all">
