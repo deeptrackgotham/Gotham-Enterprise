@@ -1,9 +1,9 @@
 import { connectToDatabase } from "@/lib/db";
 import { User } from "@/lib/models/User";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
 
@@ -16,22 +16,19 @@ export async function POST() {
 
     await connectToDatabase();
 
-    // Sync user to MongoDB
     const user = await User.findOneAndUpdate(
       { clerkId: userId },
-      {
-        clerkId: userId,
-        email,
-        fullName,
-        imageUrl,
-      },
+      { clerkId: userId, email, fullName, imageUrl },
       { upsert: true, new: true }
     );
 
     return NextResponse.json(user, { status: 200 });
   } catch (error) {
     console.error("Error syncing user:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -54,6 +51,9 @@ export async function GET() {
     return NextResponse.json(user, { status: 200 });
   } catch (error) {
     console.error("Error fetching user:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
