@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { amount, credits, currency = "KES" } = body; // amount expected in main currency units (e.g., Kenya Shillings)
+    const { amount, credits, currency = "USD" } = body; // amount expected in main currency units (USD)
 
     if (!amount || !credits) {
       return NextResponse.json({ error: "Missing amount or credits" }, { status: 400 });

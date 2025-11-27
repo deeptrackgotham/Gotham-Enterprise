@@ -95,7 +95,7 @@ export async function deleteResult(scanId: string) {
   }
 }
 
-export async function createPaystackTransaction(amount: number, credits: number, currency: string = "KES") {
+export async function createPaystackTransaction(amount: number, credits: number, currency: string = "USD") {
   try {
     const response = await fetch("/api/paystack/initialize", {
       method: "POST",
@@ -112,6 +112,26 @@ export async function createPaystackTransaction(amount: number, credits: number,
     return await response.json();
   } catch (error) {
     console.error("Error initializing paystack transaction:", error);
+    throw error;
+  }
+}
+
+export async function subscribeToTrial() {
+  try {
+    const response = await fetch("/api/users/trial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => null);
+      throw new Error(errBody?.error || "Failed to subscribe to trial");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error subscribing to trial:", error);
     throw error;
   }
 }

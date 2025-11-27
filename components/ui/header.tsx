@@ -54,24 +54,28 @@ export default function Header() {
         >
           Home
         </Link>
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500"
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/history"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500"
-        >
-          History
-        </Link>
-        <Link
-          href="/results"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500"
-        >
-          Results
-        </Link>
+        {isSignedIn && (
+          <>
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/history"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500"
+            >
+              History
+            </Link>
+            <Link
+              href="/results"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500"
+            >
+              Results
+            </Link>
+          </>
+        )}
         <Link
           href="/pricing-billing"
           className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500"
@@ -148,16 +152,19 @@ export default function Header() {
             <DropdownMenuItem asChild>
               <Link href="/" className="text-gray-800 dark:text-gray-200">Home</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard" className="text-gray-800 dark:text-gray-200">Dashboard</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/results" className="text-gray-800 dark:text-gray-200">Results</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/history" className="text-gray-800 dark:text-gray-200">History</Link>
-            </DropdownMenuItem>
-            
+            {isSignedIn && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard" className="text-gray-800 dark:text-gray-200">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/results" className="text-gray-800 dark:text-gray-200">Results</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/history" className="text-gray-800 dark:text-gray-200">History</Link>
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem asChild>
               <Link href="/pricing-billing" className="text-gray-800 dark:text-gray-200">Pricing &amp; Billing</Link>
             </DropdownMenuItem>
