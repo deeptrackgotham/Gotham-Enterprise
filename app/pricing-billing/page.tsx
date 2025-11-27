@@ -262,7 +262,7 @@ export default function PricingBillingPage() {
             <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md">
               <h3 className="text-xl font-semibold mb-4">Confirm purchase</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                You're about to purchase the <strong>{selectedPlan.name}</strong> plan for{" "}
+                You&apos;re about to purchase the <strong>{selectedPlan.name}</strong> plan for{" "}
                 <strong>
                   $
                   {billingPeriod === 'monthly'
