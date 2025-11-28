@@ -213,47 +213,10 @@ export default function PricingBillingPage() {
             <p className="text-xl text-slate-600 dark:text-slate-400 mb-2 sm:mb-0">
               Choose the perfect plan for your verification needs
             </p>
-            <a className="inline-flex items-center text-sm text-blue-500 hover:underline" href="mailto:sales@deeptrack.com">Contact Sales</a>
+            
           </div>
 
-          {/* Quick Buy Credits Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 mb-12">
-            <h2 className="text-2xl font-semibold mb-6">Buy Credits Now</h2>
-                {error && (
-              <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {creditPacks.map((pack) => (
-                <div key={pack.id} className="group relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 hover:shadow-lg transition-all">
-                  {pack.savings && (
-                    <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                      {pack.savings}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Zap className="w-5 h-5 text-blue-500 dark:text-blue-300" />
-                    <span className="text-3xl font-bold text-blue-500 dark:text-blue-300">{pack.label}</span>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-400 mb-4">${(pack.usdAmount ?? 0).toLocaleString()}</p>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <button
-                      onClick={() => handleBuyCredits(pack)}
-                      disabled={!!loadingRef}
-                      className="w-full bg-blue-500 text-white hover:bg-blue-600 py-2 rounded-lg font-semibold"
-                    >
-                      {loadingRef === pack.id + "-USD" ? "Processing..." : `Buy — $${pack.usdAmount}`}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-              💡   Each credit = 1 scan verification
-            </p>
-          </div>
         </div>
 
         {/* Currency modal for plan purchase (USD confirmation) */}
